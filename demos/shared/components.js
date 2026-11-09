@@ -109,20 +109,26 @@
     parent.append(slot);
     const status = feedback(parent, '广告请求中 · 首页主体不等待'); status.classList.add('ad-status');
     const inner = slot.querySelector('.ad-inner'); const placeholder = slot.querySelector('.ad-placeholder');
-    let revision = 0; let reserved = false; let ready = false;
+    let revision = 0; let reserved = false;
     async function close(message = '已关闭 · 先淡出内容，再收起高度') {
       const current = ++revision;
+      const height = slot.getBoundingClientRect().height;
+      const opacity = getComputedStyle(inner).opacity;
+      const transform = getComputedStyle(inner).transform;
+      slot.style.height = height + 'px';
+      inner.style.opacity = opacity;
+      inner.style.transform = transform;
       api.stop(slot); api.stop(inner);
-      if (ready) {
-        const done = await api.animate(inner, [{ opacity: getComputedStyle(inner).opacity }, { opacity: 0 }], '--motion-fast');
+      if (Number(opacity) > 0) {
+        const done = await api.animate(inner, [{ opacity }, { opacity: 0 }], '--motion-fast');
         if (!done || current !== revision) return;
       }
       placeholder.hidden = true;
       const done = await api.resize(slot, 0);
-      if (done && current === revision) { ready = false; status.textContent = message; }
+      if (done && current === revision) status.textContent = message;
     }
     function request(reserve = reserved) {
-      reserved = reserve; const current = ++revision; ready = false;
+      reserved = reserve; const current = ++revision;
       api.stop(slot); api.stop(inner);
       inner.style.opacity = '0'; inner.style.transform = 'none'; placeholder.hidden = false;
       slot.style.height = reserved ? inner.offsetHeight + 'px' : '0px';
@@ -136,7 +142,7 @@
         }
         placeholder.hidden = true;
         const done = await api.animate(inner, [{ opacity: 0, transform: 'scale(' + api.token('--motion-scale') + ')' }, { opacity: 1, transform: 'scale(1)' }], '--motion-fast');
-        if (done && current === revision) { ready = true; status.textContent = '内容已显现 · 其他区域不重新加载'; }
+        if (done && current === revision) status.textContent = '内容已显现 · 其他区域不重新加载';
       }, api.loadTime);
     }
     api.listen(slot.querySelector('.ad-close'), 'click', () => close());
