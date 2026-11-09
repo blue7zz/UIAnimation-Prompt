@@ -17,7 +17,7 @@ function mountScene() {
     const bar = node('<div></div>'); parent.append(bar);
     const advertisement = ad(parent); const listing = list(parent, true);
     const controller = drawer(title => { root.querySelector('h1').textContent = title; }); addDrawerButton(controller);
-    actions(bar, [['刷新列表', listing.refresh], ['重载广告', () => advertisement.request(false)], ['关闭广告', advertisement.close]]);
+    actions(bar, [['刷新列表', listing.refresh], ['空状态', listing.empty], ['错误状态', listing.error], ['恢复内容', listing.content], ['重载广告', () => advertisement.request(false)], ['关闭广告', advertisement.close]]);
     advertisement.request(false);
   });
 }

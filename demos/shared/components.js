@@ -27,7 +27,7 @@
     async function render() {
       const current = ++revision;
       const start = box.getBoundingClientRect().height;
-      api.stop(box);
+      api.stop(box); api.stop(inner);
       inner.innerHTML = '<div class="menu-links' + (large ? ' large' : '') + '"></div>';
       const links = inner.firstElementChild;
       const labels = twoRows ? ['为你推荐', '设计灵感', '城市漫游', '生活方式', '好物收藏', '本周精选'] : ['推荐', '设计', '生活'];
@@ -153,11 +153,20 @@
     root.append(overlay);
     const panel = overlay.querySelector('.drawer-panel'); const shade = overlay.querySelector('.drawer-overlay');
     let open = false; let revision = 0; let selected = '今日灵感'; let previousFocus;
+    let drag = null; let suppressClick = false;
+    function releaseDrag() {
+      const previous = drag; drag = null; overlay.classList.remove('dragging');
+      if (previous && panel.hasPointerCapture(previous.id)) panel.releasePointerCapture(previous.id);
+      return previous;
+    }
     async function setOpen(next) {
-      const current = ++revision; open = next;
-      if (next) previousFocus = document.activeElement;
+      const current = ++revision;
+      if (next && !open) previousFocus = document.activeElement;
+      open = next; releaseDrag();
       const fromPanel = getComputedStyle(panel).transform; const fromShade = getComputedStyle(shade).opacity;
+      panel.style.transform = fromPanel; shade.style.opacity = fromShade;
       api.stop(panel); api.stop(shade); overlay.classList.add('visible');
+      overlay.classList.toggle('closing', !next);
       if (!next) previousFocus?.focus();
       panel.inert = !next; overlay.setAttribute('aria-hidden', String(!next));
       const result = await Promise.all([api.animate(panel, [{ transform: fromPanel }, { transform: next ? 'translateX(0)' : 'translateX(calc(-1 * var(--motion-drawer-distance)))' }], '--motion-slow'), api.animate(shade, [{ opacity: fromShade }, { opacity: next ? 1 : 0 }], '--motion-slow')]);
@@ -189,10 +198,42 @@
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }
     });
-    let pointerX = null;
-    api.listen(panel, 'pointerdown', event => { pointerX = event.clientX; });
-    api.listen(panel, 'pointerup', event => { if (pointerX !== null && event.clientX - pointerX < -45) setOpen(false); pointerX = null; });
-    api.listen(panel, 'pointercancel', () => { pointerX = null; });
+    api.listen(panel, 'pointerdown', event => {
+      if (!open || !event.isPrimary || event.button !== 0) return;
+      suppressClick = false;
+      drag = { id: event.pointerId, x: event.clientX, y: event.clientY, active: false };
+    });
+    api.listen(panel, 'pointermove', event => {
+      if (!drag || drag.id !== event.pointerId) return;
+      const dx = event.clientX - drag.x; const dy = event.clientY - drag.y;
+      if (!drag.active) {
+        if (Math.abs(dx) < 4 || Math.abs(dx) <= Math.abs(dy)) return;
+        drag.offset = new DOMMatrixReadOnly(getComputedStyle(panel).transform).m41;
+        ++revision; api.stop(panel); api.stop(shade);
+        drag.active = true; panel.setPointerCapture(event.pointerId); overlay.classList.add('dragging');
+      }
+      event.preventDefault();
+      const width = panel.getBoundingClientRect().width;
+      const offset = Math.max(-width, Math.min(0, drag.offset + dx));
+      panel.style.transform = 'translateX(' + offset + 'px)';
+      shade.style.opacity = String(1 + offset / width);
+    });
+    api.listen(panel, 'pointerup', event => {
+      if (!drag || drag.id !== event.pointerId) return;
+      const previous = releaseDrag();
+      if (!previous.active) return;
+      suppressClick = true; event.preventDefault();
+      setOpen(event.clientX - previous.x >= -45);
+    });
+    function cancelDrag(event) {
+      if (drag?.id === event.pointerId && releaseDrag()?.active) setOpen(true);
+    }
+    api.listen(panel, 'pointercancel', cancelDrag);
+    api.listen(panel, 'lostpointercapture', cancelDrag);
+    api.listen(panel, 'click', event => {
+      if (!suppressClick || event.detail === 0) return;
+      suppressClick = false; event.preventDefault(); event.stopImmediatePropagation();
+    }, { capture: true });
     return { toggle: () => setOpen(!open), close: () => setOpen(false) };
   }
   function addDrawerButton(controller) {
