@@ -7,6 +7,7 @@
   let generation = 0;
   const timers = new Set();
   const animations = new Set();
+  const resizes = new WeakMap();
   function token(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
   function ms(name) {
     const raw = token(name);
@@ -35,7 +36,10 @@
     } catch (_) { return false; }
     finally { animations.delete(animation); animation.cancel(); }
   }
-  function stop(element) { element.getAnimations().forEach(animation => animation.cancel()); }
+  function stop(element) {
+    resizes.get(element)?.finish();
+    element.getAnimations().forEach(animation => animation.cancel());
+  }
   async function resize(element, target) {
     const from = element.getBoundingClientRect().height;
     stop(element);
@@ -44,17 +48,29 @@
     let previousHeight = from;
     let tracking = true;
     let frame;
-    const track = () => {
-      if (!tracking || !element.isConnected) return;
+    const compensate = () => {
+      if (!element.isConnected) return;
       const current = element.getBoundingClientRect().height;
       if (preserve) scroller.scrollTop += current - previousHeight;
       previousHeight = current;
+    };
+    const track = () => {
+      if (!tracking || !element.isConnected) return;
+      compensate();
       frame = requestAnimationFrame(track);
     };
+    const operation = { finish() {
+      if (!tracking) return;
+      if (preserve) compensate();
+      tracking = false;
+      cancelAnimationFrame(frame);
+      if (resizes.get(element) === operation) resizes.delete(element);
+    } };
+    resizes.set(element, operation);
+    const running = animate(element, [{ height: from + 'px' }, { height: target + 'px' }]);
     if (preserve) track();
-    const result = await animate(element, [{ height: from + 'px' }, { height: target + 'px' }]);
-    tracking = false;
-    cancelAnimationFrame(frame);
+    const result = await running;
+    operation.finish();
     return result;
   }
   function reset() {
