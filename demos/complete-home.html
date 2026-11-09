@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>动效交互预览 · complete-home</title>
+  <link rel="stylesheet" href="../styles/motion-tokens.css">
+  <link rel="stylesheet" href="shared/demo.css">
+  <script defer src="shared/runtime.js"></script>
+  <script defer src="shared/components.js"></script>
+</head>
+<body><main id="demo"></main>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, menu, list, ad, drawer, addDrawerButton, row, titles } = window.MotionParts;
+  api.mount(function homeScene() {
+    const parent = shell('把日子，过成喜欢。', '首页 / 广告 / 抽屉 / 列表');
+    const bar = node('<div></div>'); parent.append(bar);
+    const advertisement = ad(parent); const listing = list(parent, true);
+    const controller = drawer(title => { root.querySelector('h1').textContent = title; }); addDrawerButton(controller);
+    actions(bar, [['刷新列表', listing.refresh], ['重载广告', () => advertisement.request(false)], ['关闭广告', advertisement.close]]);
+    advertisement.request(false);
+  });
+});
+</script>
+</body>
+</html>

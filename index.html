@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Flutter 动效提示词与交互预览资料库。按场景查找，亲手预览，一键复用。">
+  <title>动效档案 · Flutter Motion Library</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles/motion-tokens.css">
+  <link rel="stylesheet" href="styles/app.css">
+  <script defer src="data/taxonomy.js"></script>
+  <script defer src="data/effects.js"></script>
+  <script defer src="scripts/library.js"></script>
+  <script defer src="scripts/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到内容</a>
+  <aside class="sidebar" aria-label="资料库导航">
+    <a class="brand" href="#/library"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>动效档案<small>FLUTTER MOTION LIBRARY</small></span></a>
+    <div class="sidebar-section"><p class="nav-caption">资料库 <span>LIBRARY</span></p><nav id="positions" aria-label="页面位置"></nav></div>
+    <div class="sidebar-note"><span class="note-icon">↗</span><strong>好的动效，不止于好看。</strong><p>让每一次加载、切换与返回，<br>都有自然的节奏。</p><a href="README.md" target="_blank">如何添加新效果 <span>↗</span></a></div>
+    <div class="sidebar-footer"><span class="status-dot"></span>本地优先 · 开放扩展 <span>v1.0</span></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar">
+      <span class="breadcrumb">资料库 <span>/</span> <b id="breadcrumb-current">全部效果</b></span>
+      <div class="topbar-actions"><label class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="search" type="search" aria-label="搜索效果" placeholder="搜索效果、场景或关键词…" autocomplete="off"><kbd>⌘ K</kbd></label><button class="icon-button" id="theme-toggle" aria-label="切换深浅色" title="切换深浅色"></button><a class="icon-button github-link" href="https://github.com/blue7zz/UIAnimation-Prompt" aria-label="GitHub 仓库" target="_blank" rel="noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4 1-4-2-6-2m12 5v-4a3.5 3.5 0 0 0-1-2.7c3.3-.4 6.8-1.6 6.8-7.3A5.7 5.7 0 0 0 19.3 4 5.3 5.3 0 0 0 19.2.2S18 0 15 1.7a13 13 0 0 0-6 0C6 0 4.8.2 4.8.2A5.3 5.3 0 0 0 4.7 4a5.7 5.7 0 0 0-1.5 4c0 5.7 3.5 6.9 6.8 7.3A3.5 3.5 0 0 0 9 18v4" transform="translate(0 1) scale(.9)"/></svg></a></div>
+    </header>
+    <main id="main" tabindex="-1"></main>
+    <footer class="page-footer"><span>为细腻的交互，留一份好用的档案。</span><span>Flutter prompts. Web previews.</span></footer>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <noscript>请启用 JavaScript，以查看资料库和动效预览。</noscript>
+</body>
+</html>

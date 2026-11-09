@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>动效交互预览 · drawer</title>
+  <link rel="stylesheet" href="../styles/motion-tokens.css">
+  <link rel="stylesheet" href="shared/demo.css">
+  <script defer src="shared/runtime.js"></script>
+  <script defer src="shared/components.js"></script>
+</head>
+<body><main id="demo"></main>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, menu, list, ad, drawer, addDrawerButton, row, titles } = window.MotionParts;
+  api.mount(function drawerScene() {
+    const parent = shell('轻轻打开，新方向。', '抽屉 / 遮罩 / 菜单切换');
+    const status = feedback(parent, '开关抽屉不会重新请求列表或广告。');
+    const controller = drawer(title => { root.querySelector('h1').textContent = title; status.textContent = '抽屉已关闭，再切换到「' + title + '」'; });
+    addDrawerButton(controller);
+    actions(parent, [['打开 / 关闭抽屉', controller.toggle]]); list(parent);
+    note(parent, '点击当前菜单只关闭。其他菜单在关闭完成后切换，不依赖固定延时。');
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>动效交互预览 · general-rules</title>
+  <link rel="stylesheet" href="../styles/motion-tokens.css">
+  <link rel="stylesheet" href="shared/demo.css">
+  <script defer src="shared/runtime.js"></script>
+  <script defer src="shared/components.js"></script>
+</head>
+<body><main id="demo"></main>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, menu, list, ad, drawer, addDrawerButton, row, titles } = window.MotionParts;
+  api.mount(function generalScene() {
+    const parent = shell('动效，恰到好处。', '少一点打扰，多一点连续。');
+    const badge = node('<span class="preview-badge"></span>'); badge.textContent = api.settings.reduced ? '减少动态效果 · 已开启' : '统一参数 · 可打断与反向'; parent.append(badge);
+    let count = 0;
+    const panel = node('<div class="sample-panel"><span class="sample-symbol">✦</span><h2>一切准备就绪</h2><p>点击下方按钮，观察局部内容切换。</p></div>'); parent.append(panel);
+    const status = feedback(parent, '试试快速连续切换，再开启减少动态效果。');
+    const bar = actions(parent, [['切换状态', () => {
+      count++; api.stop(panel);
+      const state = count % 3;
+      panel.querySelector('h2').textContent = ['一切准备就绪', '已保存这份灵感', '这里暂时留白'][state];
+      panel.querySelector('p').textContent = ['当前是内容状态。', '已收到操作，反馈到此为止。', '状态切换，不需要整页重来。'][state];
+      panel.querySelector('.sample-symbol').textContent = ['✦', '✓', '◌'][state];
+      api.animate(panel, [{ opacity: .4, transform: 'translateY(' + api.distance + ')' }, { opacity: 1, transform: 'translateY(0px)' }], '--motion-fast');
+      status.textContent = '第 ' + count + ' 次切换 · 新操作可打断旧动画';
+    }]]); bar.style.marginTop = '12px';
+    const rules = node('<div class="rule-list"><p><b>01</b>时长、曲线、位移集中定义</p><p><b>02</b>不以全页重播代替局部反馈</p><p><b>03</b>快速连续操作，不锁住交互</p><p><b>04</b>响应系统减少动态效果设置</p></div>'); parent.append(rules);
+  });
+});
+</script>
+</body>
+</html>

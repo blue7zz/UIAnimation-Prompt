@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>动效交互预览 · menu-skeleton</title>
+  <link rel="stylesheet" href="../styles/motion-tokens.css">
+  <link rel="stylesheet" href="shared/demo.css">
+  <script defer src="shared/runtime.js"></script>
+  <script defer src="shared/components.js"></script>
+</head>
+<body><main id="demo"></main>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, menu, list, ad, drawer, addDrawerButton, row, titles } = window.MotionParts;
+  api.mount(function menuScene() {
+    const parent = shell('每一行，都从容。', '顶部菜单栏 / 骨架到真实内容');
+    const mount = node('<div></div>'); const bar = node('<div></div>'); parent.append(bar, mount);
+    const controller = menu(mount);
+    actions(bar, [['一行菜单', controller.one], ['两行菜单', controller.two], ['大字体', controller.font], ['重新加载', controller.reload]]);
+    const status = feedback(parent, '骨架按两行占位 · 可预选最终菜单行数');
+    list(parent);
+    note(parent, '菜单测量真实换行高度，下方列表跟随父级变化，不叠加额外位移动画。');
+    api.listen(bar, 'click', event => { if (event.target.tagName === 'BUTTON') status.textContent = '已选择：' + event.target.textContent + ' · 不重置列表'; });
+  });
+});
+</script>
+</body>
+</html>

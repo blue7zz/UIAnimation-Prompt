@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>动效交互预览 · home-ad</title>
+  <link rel="stylesheet" href="../styles/motion-tokens.css">
+  <link rel="stylesheet" href="shared/demo.css">
+  <script defer src="shared/runtime.js"></script>
+  <script defer src="shared/components.js"></script>
+</head>
+<body><main id="demo"></main>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, menu, list, ad, drawer, addDrawerButton, row, titles } = window.MotionParts;
+  api.mount(function adScene() {
+    const parent = shell('给内容，留个位置。', '嵌入式广告 / 先位置，后内容');
+    const bar = node('<div></div>'); parent.append(bar);
+    const controller = ad(parent);
+    actions(bar, [['从 0 展开', () => controller.request(false)], ['预留位置', () => controller.request(true)], ['关闭', controller.close], ['模拟失败', controller.fail]]);
+    list(parent); controller.request(false);
+    note(parent, '仅为测试广告示意，不接入真实 SDK、不请求或点击生产广告。');
+  });
+});
+</script>
+</body>
+</html>

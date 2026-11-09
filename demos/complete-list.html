@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>动效交互预览 · complete-list</title>
+  <link rel="stylesheet" href="../styles/motion-tokens.css">
+  <link rel="stylesheet" href="shared/demo.css">
+  <script defer src="shared/runtime.js"></script>
+  <script defer src="shared/components.js"></script>
+</head>
+<body><main id="demo"></main>
+<script>
+window.addEventListener('DOMContentLoaded', function () {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, menu, list, ad, drawer, addDrawerButton, row, titles } = window.MotionParts;
+  api.mount(function completeListScene() {
+    const parent = shell('好内容，自然到来。', '列表页 / 菜单骨架与列表联动');
+    const bar = node('<div></div>'); parent.append(bar);
+    const menus = menu(parent); const listing = list(parent, true);
+    actions(bar, [['一行', menus.one], ['两行', menus.two], ['刷新', listing.refresh], ['空', listing.empty], ['错误', listing.error], ['内容', listing.content]]);
+  });
+});
+</script>
+</body>
+</html>
