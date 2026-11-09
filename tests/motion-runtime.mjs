@@ -4,7 +4,12 @@ import vm from 'node:vm';
 
 const frames = new Map();
 let nextFrame = 0;
-const scroller = { scrollTop: 110, getBoundingClientRect: () => ({ top: 0 }) };
+let scrollPosition = 110;
+const scroller = {
+  get scrollTop() { return scrollPosition; },
+  set scrollTop(value) { scrollPosition = Math.max(0, Math.round(value)); },
+  getBoundingClientRect: () => ({ top: 0 })
+};
 const window = { addEventListener() {} };
 const root = { dataset: {}, style: { setProperty() {} } };
 const tokens = { '--motion-normal': '240ms', '--motion-ease': 'ease' };
@@ -46,6 +51,29 @@ slot.getAnimations()[0].finish();
 assert.equal(await expansion, true);
 assert.equal(scroller.scrollTop, 222, 'Final height delta must be compensated even without a final animation frame');
 assert.equal(frames.size, 0);
+slot.height = 0; scroller.scrollTop = 110;
+const fractionalExpansion = api.resize(slot, 112);
+for (let index = 1; index <= 128; index++) { slot.height = index * 112 / 128; tick(); }
+slot.getAnimations()[0].finish();
+assert.equal(await fractionalExpansion, true);
+assert.equal(scroller.scrollTop, 222, 'Fractional per-frame heights must not accumulate rounded scroll deltas');
+scroller.scrollTop = 120;
+const fractionalCollapse = api.resize(slot, 0);
+for (let index = 1; index <= 128; index++) { slot.height = 112 - index * 112 / 128; tick(); }
+slot.getAnimations()[0].finish();
+assert.equal(await fractionalCollapse, true);
+assert.equal(scroller.scrollTop, 8, 'Slow collapse must retain its absolute reading anchor despite integer scroll rounding');
+slot.height = 0; scroller.scrollTop = 110;
+const withUserScroll = api.resize(slot, 112);
+for (let index = 1; index <= 128; index++) {
+  slot.height = index * 112 / 128;
+  if (index === 64) scroller.scrollTop += 11;
+  tick();
+}
+slot.getAnimations()[0].finish();
+assert.equal(await withUserScroll, true);
+assert.equal(scroller.scrollTop, 233, 'Actual user scrolling during an animation must be preserved');
+assert.equal(frames.size, 0);
 
 slot.height = 0; scroller.scrollTop = 110;
 const interrupted = api.resize(slot, 112);
@@ -65,4 +93,4 @@ assert.equal(await collapse, true);
 assert.equal(scroller.scrollTop, 110, 'Reverse collapse must restore the original reading anchor');
 assert.equal(frames.size, 0);
 assert.match(await readFile(new URL('../demos/shared/demo.css', import.meta.url), 'utf8'), /\.demo-scroll\s*\{[^}]*overflow-anchor:\s*none/, 'Native scroll anchoring must not double-compensate manual height anchoring');
-console.log('PASS: terminal-frame anchoring, interruption flush, reverse collapse, frame cleanup and native-anchor exclusion.');
+console.log('PASS: terminal-frame anchoring, interruption/reverse, fractional scroll rounding, live user scroll, frame cleanup and native-anchor exclusion.');

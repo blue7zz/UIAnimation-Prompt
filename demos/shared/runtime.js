@@ -45,14 +45,18 @@
     stop(element);
     const scroller = document.querySelector('.demo-scroll');
     const preserve = scroller && element.getBoundingClientRect().top < scroller.getBoundingClientRect().top;
-    let previousHeight = from;
+    let scrollOrigin = scroller?.scrollTop || 0;
+    let assignedScroll = scrollOrigin;
     let tracking = true;
     let frame;
     const compensate = () => {
       if (!element.isConnected) return;
       const current = element.getBoundingClientRect().height;
-      if (preserve) scroller.scrollTop += current - previousHeight;
-      previousHeight = current;
+      if (preserve) {
+        scrollOrigin += scroller.scrollTop - assignedScroll;
+        scroller.scrollTop = scrollOrigin + current - from;
+        assignedScroll = scroller.scrollTop;
+      }
     };
     const track = () => {
       if (!tracking || !element.isConnected) return;
