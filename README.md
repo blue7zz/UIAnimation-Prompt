@@ -93,6 +93,7 @@ Chrome 会阻止隔离的 `file://` iframe 加载本地外部资源，因此双�
 
 ```sh
 node tests/validate-data.mjs
+node tests/motion-runtime.mjs
 find data scripts demos/shared -name '*.js' -exec node --check {} \;
 git diff --check
 ```
@@ -127,4 +128,5 @@ demos/page-transition.html       F 转场场景
 demos/complete-home.html         完整首页场景
 demos/complete-list.html         完整列表页场景
 tests/validate-data.mjs          无第三方依赖的数据与逻辑校验
+tests/motion-runtime.mjs         高度动画阅读锚点及打断/反向回归校验
 ```
