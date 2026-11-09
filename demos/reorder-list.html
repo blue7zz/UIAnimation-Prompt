@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>动效交互预览 · 拖动排序</title></head>
+<body><main id="demo"></main>
+<script>
+function mountScene() {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, row, to, dragAxis, popup, choices } = window.MotionParts;
+  api.mount(function () {
+    const parent = shell('拖动排序', '网页模拟 · 按钮、键盘与快速操作');
+    const status = feedback(parent, '请操作下方示例，观察局部变化。');
+
+    const region = node('<div></div>'); parent.append(region); let rows = []; let dragging = null;
+    function announce() { status.textContent = '顺序：' + rows.map(el => el.dataset.id).join(' → '); rows.forEach((el, i) => { el.querySelector('[data-up]').disabled = i === 0; el.querySelector('[data-down]').disabled = i === rows.length - 1; }); }
+    function reorder(element, target) {
+      const old = new Map(rows.map(el => [el, el.getBoundingClientRect().top])); const index = rows.indexOf(element);
+      if (target < 0 || target >= rows.length || target === index) return;
+      const focus = document.activeElement;
+      rows.splice(index, 1); rows.splice(target, 0, element); rows.forEach(el => region.append(el));
+      if (region.contains(focus)) focus.focus({ preventScroll: true });
+      rows.forEach(el => { if (el === dragging) return; api.stop(el); const dy = old.get(el) - el.getBoundingClientRect().top; api.animate(el, [{ transform: 'translateY(' + dy + 'px)' }, { transform: 'translateY(0px)' }]); }); announce();
+    }
+    ['A · 城市慢行', 'B · 山野呼吸', 'C · 留白一日'].forEach((label, index) => {
+      const el = node('<div class="reorder-row" tabindex="0"><span aria-hidden="true">☷</span><span class="row-name"></span></div>'); el.dataset.id = 'plan-' + (index + 1); el.querySelector('.row-name').textContent = label + ' / ' + el.dataset.id;
+      const up = button('上移', () => reorder(el, rows.indexOf(el) - 1)); const down = button('下移', () => reorder(el, rows.indexOf(el) + 1)); up.dataset.up = ''; down.dataset.down = ''; el.append(up, down); rows.push(el); region.append(el);
+      let snapshot; let startTop = 0; let cancelled = false;
+      dragAxis(el, 'y', (delta, phase) => {
+        if (phase === 'start') { snapshot = [...rows]; startTop = el.offsetTop; dragging = el; cancelled = false; el.classList.add('dragging'); rows.forEach(item => api.stop(item)); }
+        if (phase === 'move' && !cancelled) { const height = el.offsetHeight + 6; const target = Math.max(0, Math.min(rows.length - 1, snapshot.indexOf(el) + Math.round(delta / height))); reorder(el, target); el.style.transform = 'translateY(' + (startTop + delta - el.offsetTop) + 'px)'; }
+        if (phase === 'cancel' || phase === 'end') {
+          if (phase === 'cancel' && !cancelled) { rows = snapshot; rows.forEach(item => region.append(item)); }
+          dragging = null; el.classList.remove('dragging'); to(el, { transform: 'translateY(0px)' }); announce(); el.focus({ preventScroll: true });
+        }
+      });
+      api.listen(el, 'keydown', event => {
+        if (event.key === 'Escape' && dragging === el) { event.preventDefault(); cancelled = true; rows = snapshot; rows.forEach(item => region.append(item)); dragging = null; el.classList.remove('dragging'); to(el, { transform: 'translateY(0px)' }); announce(); el.focus({ preventScroll: true }); }
+        if ((event.altKey && event.key === 'ArrowUp') || (event.altKey && event.key === 'ArrowDown')) { event.preventDefault(); reorder(el, rows.indexOf(el) + (event.key === 'ArrowUp' ? -1 : 1)); }
+      });
+    });
+    announce(); note(parent, '上下拖动；也可用上移/下移按钮或 Alt+方向键。拖动中 ESC 取消。');
+
+  });
+}
+
+  let started = false;
+  function start() { if (!started) { started = true; mountScene(); } }
+  function appendStyle(css) { const style = document.createElement('style'); style.textContent = css; document.head.append(style); }
+  if (location.protocol === 'file:' && parent !== window) {
+    function receive(event) {
+      const data = event.data;
+      if (event.source !== parent || data?.channel !== 'motion-library' || data.action !== 'shared-assets') return;
+      const assets = data.assets;
+      if (!assets || !['css', 'runtime', 'components'].every(key => typeof assets[key] === 'string')) return;
+      window.removeEventListener('message', receive);
+      appendStyle(assets.css);
+      for (const source of [assets.runtime, assets.components]) { const script = document.createElement('script'); script.textContent = source; document.head.append(script); }
+      start();
+    }
+    window.addEventListener('message', receive);
+    parent.postMessage({ channel: 'motion-library', action: 'request-assets' }, '*');
+  } else {
+    const styles = ['../styles/motion-tokens.css', 'shared/demo.css'].map(href => new Promise((resolve, reject) => {
+      const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; link.onload = resolve; link.onerror = reject; document.head.append(link);
+    }));
+    function load(src) { return new Promise((resolve, reject) => { const script = document.createElement('script'); script.src = src; script.onload = resolve; script.onerror = reject; document.head.append(script); }); }
+    Promise.all(styles).then(() => load('shared/runtime.js')).then(() => load('shared/components.js')).then(start).catch(() => { document.querySelector('#demo').textContent = '预览资源未能加载，请刷新重试。'; });
+  }
+</script>
+</body>
+</html>

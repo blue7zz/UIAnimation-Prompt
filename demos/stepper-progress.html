@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>动效交互预览 · 步骤切换</title></head>
+<body><main id="demo"></main>
+<script>
+function mountScene() {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, row, to, dragAxis, popup, choices } = window.MotionParts;
+  api.mount(function () {
+    const parent = shell('步骤切换', '网页模拟 · 按钮、键盘与快速操作');
+    const status = feedback(parent, '请操作下方示例，观察局部变化。');
+
+    let step = 0; let revision = 0; const labels = ['选一个目的地', '安排出发时间', '检查你的计划'];
+    const dots = node('<div class="step-dots" aria-hidden="true"><span></span><span></span><span></span></div>');
+    const panel = node('<section class="example-card example-panel" aria-live="polite"><h2></h2><p></p></section>'); parent.append(dots, panel);
+    const bar = actions(parent, [['上一步', () => change(step - 1)], ['下一步', () => change(step + 1)]]);
+    panel.tabIndex = -1;
+    function controls() { const focused = document.activeElement; bar.children[0].disabled = step === 0; bar.children[1].disabled = step === 2; if ([...bar.children].some(item => item === focused && item.disabled)) panel.focus({ preventScroll: true }); }
+    function render() { panel.querySelector('h2').textContent = labels[step]; panel.querySelector('p').textContent = '第 ' + (step + 1) + ' 步，共 3 步'; dots.querySelectorAll('span').forEach((dot, i) => dot.classList.toggle('active', i <= step)); controls(); }
+    async function change(next) { if (next < 0 || next > 2 || next === step) return; step = next; const current = ++revision; controls(); const done = await to(panel, { opacity: 0 }, '--motion-fast'); if (!done || current !== revision) return; render(); to(panel, { opacity: 1 }, '--motion-fast'); }
+    render();
+
+  });
+}
+
+  let started = false;
+  function start() { if (!started) { started = true; mountScene(); } }
+  function appendStyle(css) { const style = document.createElement('style'); style.textContent = css; document.head.append(style); }
+  if (location.protocol === 'file:' && parent !== window) {
+    function receive(event) {
+      const data = event.data;
+      if (event.source !== parent || data?.channel !== 'motion-library' || data.action !== 'shared-assets') return;
+      const assets = data.assets;
+      if (!assets || !['css', 'runtime', 'components'].every(key => typeof assets[key] === 'string')) return;
+      window.removeEventListener('message', receive);
+      appendStyle(assets.css);
+      for (const source of [assets.runtime, assets.components]) { const script = document.createElement('script'); script.textContent = source; document.head.append(script); }
+      start();
+    }
+    window.addEventListener('message', receive);
+    parent.postMessage({ channel: 'motion-library', action: 'request-assets' }, '*');
+  } else {
+    const styles = ['../styles/motion-tokens.css', 'shared/demo.css'].map(href => new Promise((resolve, reject) => {
+      const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; link.onload = resolve; link.onerror = reject; document.head.append(link);
+    }));
+    function load(src) { return new Promise((resolve, reject) => { const script = document.createElement('script'); script.src = src; script.onload = resolve; script.onerror = reject; document.head.append(script); }); }
+    Promise.all(styles).then(() => load('shared/runtime.js')).then(() => load('shared/components.js')).then(start).catch(() => { document.querySelector('#demo').textContent = '预览资源未能加载，请刷新重试。'; });
+  }
+</script>
+</body>
+</html>

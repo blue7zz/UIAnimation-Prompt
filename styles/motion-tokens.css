@@ -1,0 +1,20 @@
+:root {
+  --motion-fast: 150ms;
+  --motion-normal: 240ms;
+  --motion-slow: 320ms;
+  --motion-return: 210ms;
+  --motion-stagger: 28ms;
+  --motion-stagger-cap: 112ms;
+  --motion-distance: 8px;
+  --motion-page-distance: 100%;
+  --motion-drawer-distance: 100%;
+  --motion-scale: .98;
+  --motion-ease: cubic-bezier(.2, .8, .2, 1);
+  --motion-linear: linear;
+  --motion-rate: 1;
+  --motion-load: 650ms;
+  --motion-load-slow: 2400ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root { --motion-distance: 0px; --motion-stagger: 0ms; --motion-stagger-cap: 0ms; }
+}

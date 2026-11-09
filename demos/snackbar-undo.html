@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>动效交互预览 · 提示条与撤销</title></head>
+<body><main id="demo"></main>
+<script>
+function mountScene() {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, row, to, dragAxis, popup, choices } = window.MotionParts;
+  api.mount(function () {
+    const parent = shell('提示条与撤销', '网页模拟 · 按钮、键盘与快速操作');
+    const status = feedback(parent, '请操作下方示例，观察局部变化。');
+
+    const cards = ['A', 'B'].map((name, index) => { const card = node('<article class="example-card"><h2></h2><p>删除后可撤销，业务 id 不变。</p></article>'); card.dataset.id = 'plan-' + (index + 1); card.querySelector('h2').textContent = name + ' · 周末慢行计划'; parent.append(card); return card; });
+    const snack = node('<div class="snackbar" role="status" hidden><span>计划已删除 · 等待撤销</span></div>'); parent.append(snack);
+    let revision = 0; let pending = -1; let origin;
+    const hide = async current => { if (snack.contains(document.activeElement)) origin?.focus(); const done = await to(snack, { opacity: 0 }, '--motion-fast'); if (done && current === revision) { snack.hidden = true; pending = -1; } };
+    snack.append(button('撤销', () => { if (pending < 0) return; const current = ++revision; cards[pending].hidden = false; status.textContent = '已恢复同一条计划'; hide(current); }));
+    const bar = actions(parent, [['删除 A', () => remove(0)], ['删除 B', () => remove(1)], ['恢复示例', () => { const current = ++revision; cards.forEach(card => { card.hidden = false; }); hide(current); }]]);
+    async function remove(index) {
+      if (cards[index].hidden) return;
+      const current = ++revision; pending = index; origin = bar.children[index]; cards[index].hidden = true; snack.hidden = false;
+      snack.firstElementChild.textContent = ['A', 'B'][index] + ' 已删除 · 5秒内可撤销';
+      const shown = await to(snack, { opacity: 1 }, '--motion-fast'); if (!shown || current !== revision) return;
+      status.textContent = '最新操作替换旧计时；撤销获焦时延长窗口';
+      function expire() { if (current !== revision) return; if (snack.contains(document.activeElement)) { api.later(expire, 500); return; } status.textContent = '删除已确认 · 撤销窗口已结束'; hide(current); }
+      api.later(expire, 5000);
+    }
+
+  });
+}
+
+  let started = false;
+  function start() { if (!started) { started = true; mountScene(); } }
+  function appendStyle(css) { const style = document.createElement('style'); style.textContent = css; document.head.append(style); }
+  if (location.protocol === 'file:' && parent !== window) {
+    function receive(event) {
+      const data = event.data;
+      if (event.source !== parent || data?.channel !== 'motion-library' || data.action !== 'shared-assets') return;
+      const assets = data.assets;
+      if (!assets || !['css', 'runtime', 'components'].every(key => typeof assets[key] === 'string')) return;
+      window.removeEventListener('message', receive);
+      appendStyle(assets.css);
+      for (const source of [assets.runtime, assets.components]) { const script = document.createElement('script'); script.textContent = source; document.head.append(script); }
+      start();
+    }
+    window.addEventListener('message', receive);
+    parent.postMessage({ channel: 'motion-library', action: 'request-assets' }, '*');
+  } else {
+    const styles = ['../styles/motion-tokens.css', 'shared/demo.css'].map(href => new Promise((resolve, reject) => {
+      const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; link.onload = resolve; link.onerror = reject; document.head.append(link);
+    }));
+    function load(src) { return new Promise((resolve, reject) => { const script = document.createElement('script'); script.src = src; script.onload = resolve; script.onerror = reject; document.head.append(script); }); }
+    Promise.all(styles).then(() => load('shared/runtime.js')).then(() => load('shared/components.js')).then(start).catch(() => { document.querySelector('#demo').textContent = '预览资源未能加载，请刷新重试。'; });
+  }
+</script>
+</body>
+</html>

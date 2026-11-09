@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>动效交互预览 · 滚动收缩标题栏</title></head>
+<body><main id="demo"></main>
+<script>
+function mountScene() {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, row, to, dragAxis, popup, choices } = window.MotionParts;
+  api.mount(function () {
+    const parent = shell('滚动收缩标题栏', '网页模拟 · 按钮、键盘与快速操作');
+    const status = feedback(parent, '请操作下方示例，观察局部变化。');
+
+    const header = node('<div class="collapse-header"><h2>山野之间</h2><p>滚动驱动，不重复播放入场动画</p></div>'); parent.append(header);
+    for (let i = 0; i < 12; i++) parent.append(row(i));
+    function update() { const amount = Math.min(1, parent.scrollTop / 110); header.style.height = header.style.minHeight = (110 - 58 * amount) + 'px'; header.querySelector('h2').style.fontSize = (api.settings.reduced ? 14 : 22 - 8 * amount) + 'px'; header.querySelector('p').style.opacity = String(1 - amount); }
+    api.listen(parent, 'scroll', update, { passive: true });
+    actions(parent, [['回到顶部', () => { parent.scrollTop = 0; update(); }]]); update();
+
+  });
+}
+
+  let started = false;
+  function start() { if (!started) { started = true; mountScene(); } }
+  function appendStyle(css) { const style = document.createElement('style'); style.textContent = css; document.head.append(style); }
+  if (location.protocol === 'file:' && parent !== window) {
+    function receive(event) {
+      const data = event.data;
+      if (event.source !== parent || data?.channel !== 'motion-library' || data.action !== 'shared-assets') return;
+      const assets = data.assets;
+      if (!assets || !['css', 'runtime', 'components'].every(key => typeof assets[key] === 'string')) return;
+      window.removeEventListener('message', receive);
+      appendStyle(assets.css);
+      for (const source of [assets.runtime, assets.components]) { const script = document.createElement('script'); script.textContent = source; document.head.append(script); }
+      start();
+    }
+    window.addEventListener('message', receive);
+    parent.postMessage({ channel: 'motion-library', action: 'request-assets' }, '*');
+  } else {
+    const styles = ['../styles/motion-tokens.css', 'shared/demo.css'].map(href => new Promise((resolve, reject) => {
+      const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; link.onload = resolve; link.onerror = reject; document.head.append(link);
+    }));
+    function load(src) { return new Promise((resolve, reject) => { const script = document.createElement('script'); script.src = src; script.onload = resolve; script.onerror = reject; document.head.append(script); }); }
+    Promise.all(styles).then(() => load('shared/runtime.js')).then(() => load('shared/components.js')).then(start).catch(() => { document.querySelector('#demo').textContent = '预览资源未能加载，请刷新重试。'; });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>动效交互预览 · 搜索建议</title></head>
+<body><main id="demo"></main>
+<script>
+function mountScene() {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, row, to, dragAxis, popup, choices } = window.MotionParts;
+  api.mount(function () {
+    const parent = shell('搜索建议', '网页模拟 · 按钮、键盘与快速操作');
+    const status = feedback(parent, '请操作下方示例，观察局部变化。');
+
+    const input = node('<input class="example-input" type="search" aria-label="搜索灵感" placeholder="输入城市 / 山野；输入 错误 测试失败">'); parent.append(input);
+    const region = node('<div class="example-card" aria-live="polite" hidden></div>'); parent.append(region);
+    let revision = 0; let fail = false;
+    function search() { const current = ++revision; const query = input.value.trim(); api.stop(region);
+      if (!query) { region.replaceChildren(); region.hidden = true; input.focus(); status.textContent = '搜索已清空 · 旧请求失效'; return; }
+      region.hidden = false;
+      region.textContent = '正在查询「' + query + '」…';
+      api.later(() => { if (current !== revision) return; region.replaceChildren();
+        if (query === '错误' && !fail) { region.append(node('<p>查询失败，请重试</p>'), button('重试查询', () => { fail = true; search(); })); }
+        else if (query === '空') region.textContent = '没有匹配结果';
+        else ['慢行', '留白', '灵感'].forEach(word => region.append(button(query + ' · ' + word, () => { ++revision; input.value = query + ' · ' + word; region.textContent = '已选择：' + input.value; })));
+        region.style.opacity = '.3'; to(region, { opacity: 1 }, '--motion-fast'); status.textContent = '仅最新查询生效：' + query;
+      }, query.includes('旧') ? api.loadTime * 2 : api.loadTime);
+    }
+    api.listen(input, 'input', () => { fail = false; search(); });
+    actions(parent, [['查询空结果', () => { input.value = '空'; search(); }], ['查询错误', () => { input.value = '错误'; fail = false; search(); }], ['旧→新竞态', () => { input.value = '旧查询'; search(); api.later(() => { input.value = '新查询'; search(); }, 50); }], ['清空', () => { input.value = ''; search(); }]]);
+
+  });
+}
+
+  let started = false;
+  function start() { if (!started) { started = true; mountScene(); } }
+  function appendStyle(css) { const style = document.createElement('style'); style.textContent = css; document.head.append(style); }
+  if (location.protocol === 'file:' && parent !== window) {
+    function receive(event) {
+      const data = event.data;
+      if (event.source !== parent || data?.channel !== 'motion-library' || data.action !== 'shared-assets') return;
+      const assets = data.assets;
+      if (!assets || !['css', 'runtime', 'components'].every(key => typeof assets[key] === 'string')) return;
+      window.removeEventListener('message', receive);
+      appendStyle(assets.css);
+      for (const source of [assets.runtime, assets.components]) { const script = document.createElement('script'); script.textContent = source; document.head.append(script); }
+      start();
+    }
+    window.addEventListener('message', receive);
+    parent.postMessage({ channel: 'motion-library', action: 'request-assets' }, '*');
+  } else {
+    const styles = ['../styles/motion-tokens.css', 'shared/demo.css'].map(href => new Promise((resolve, reject) => {
+      const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; link.onload = resolve; link.onerror = reject; document.head.append(link);
+    }));
+    function load(src) { return new Promise((resolve, reject) => { const script = document.createElement('script'); script.src = src; script.onload = resolve; script.onerror = reject; document.head.append(script); }); }
+    Promise.all(styles).then(() => load('shared/runtime.js')).then(() => load('shared/components.js')).then(start).catch(() => { document.querySelector('#demo').textContent = '预览资源未能加载，请刷新重试。'; });
+  }
+</script>
+</body>
+</html>

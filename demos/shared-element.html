@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>动效交互预览 · 共享元素</title></head>
+<body><main id="demo"></main>
+<script>
+function mountScene() {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, row, to, dragAxis, popup, choices } = window.MotionParts;
+  api.mount(function () {
+    const parent = shell('共享元素', '网页模拟 · 按钮、键盘与快速操作');
+    const status = feedback(parent, '请操作下方示例，观察局部变化。');
+
+    const thumb = node('<button class="hero-thumb" aria-label="查看山野详情">山</button>'); parent.append(thumb);
+    const detail = node('<section class="hero-view" hidden><div class="hero-destination">山</div><h2>山野之间，自有答案</h2><p>共享的是同一个视觉元素，不是整页缩放。</p></section>');
+    const flight = node('<div class="hero-flight" aria-hidden="true" hidden>山</div>'); root.append(detail, flight);
+    const back = button('← 返回', () => navigate(false)); detail.prepend(back);
+    let opened = false; let revision = 0;
+    function rect(el) { const base = root.getBoundingClientRect(); const r = el.getBoundingClientRect(); return { left: r.left - base.left + 'px', top: r.top - base.top + 'px', width: r.width + 'px', height: r.height + 'px' }; }
+    async function navigate(next) {
+      if (next === opened) return; const current = ++revision; const wasFlying = !flight.hidden; opened = next;
+      detail.hidden = false; flight.hidden = false;
+      root.querySelector('.demo-app').inert = next;
+      if (next) back.focus();
+      if (!wasFlying) Object.assign(flight.style, rect(next ? thumb : detail.querySelector('.hero-destination')));
+      thumb.style.visibility = 'hidden'; detail.querySelector('.hero-destination').style.visibility = 'hidden';
+      const done = await to(flight, rect(next ? detail.querySelector('.hero-destination') : thumb), next ? '--motion-slow' : '--motion-return');
+      if (!done || current !== revision) return; flight.hidden = true;
+      detail.hidden = !next; thumb.style.visibility = 'visible'; detail.querySelector('.hero-destination').style.visibility = 'visible';
+      (next ? back : thumb).focus(); status.textContent = next ? '详情已打开' : '返回后原列表仍在';
+    }
+    api.listen(thumb, 'click', () => navigate(true));
+    api.listen(document, 'keydown', event => { if (event.key === 'Escape' && opened) navigate(false); });
+    note(parent, '缩略图 → 详情大图，支持转场中立即返回。');
+
+  });
+}
+
+  let started = false;
+  function start() { if (!started) { started = true; mountScene(); } }
+  function appendStyle(css) { const style = document.createElement('style'); style.textContent = css; document.head.append(style); }
+  if (location.protocol === 'file:' && parent !== window) {
+    function receive(event) {
+      const data = event.data;
+      if (event.source !== parent || data?.channel !== 'motion-library' || data.action !== 'shared-assets') return;
+      const assets = data.assets;
+      if (!assets || !['css', 'runtime', 'components'].every(key => typeof assets[key] === 'string')) return;
+      window.removeEventListener('message', receive);
+      appendStyle(assets.css);
+      for (const source of [assets.runtime, assets.components]) { const script = document.createElement('script'); script.textContent = source; document.head.append(script); }
+      start();
+    }
+    window.addEventListener('message', receive);
+    parent.postMessage({ channel: 'motion-library', action: 'request-assets' }, '*');
+  } else {
+    const styles = ['../styles/motion-tokens.css', 'shared/demo.css'].map(href => new Promise((resolve, reject) => {
+      const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; link.onload = resolve; link.onerror = reject; document.head.append(link);
+    }));
+    function load(src) { return new Promise((resolve, reject) => { const script = document.createElement('script'); script.src = src; script.onload = resolve; script.onerror = reject; document.head.append(script); }); }
+    Promise.all(styles).then(() => load('shared/runtime.js')).then(() => load('shared/components.js')).then(start).catch(() => { document.querySelector('#demo').textContent = '预览资源未能加载，请刷新重试。'; });
+  }
+</script>
+</body>
+</html>
