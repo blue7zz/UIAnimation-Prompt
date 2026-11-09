@@ -31,6 +31,26 @@ window.MotionCatalog = {
     {
       "id": "general",
       "label": "通用规则"
+    },
+    {
+      "id": "controls",
+      "label": "按钮 / 开关"
+    },
+    {
+      "id": "forms",
+      "label": "表单 / 搜索"
+    },
+    {
+      "id": "media",
+      "label": "图片 / 媒体"
+    },
+    {
+      "id": "notifications",
+      "label": "提示 / 反馈"
+    },
+    {
+      "id": "scroll-area",
+      "label": "滚动区域"
     }
   ],
   "types": [
@@ -65,6 +85,38 @@ window.MotionCatalog = {
     {
       "id": "reduced-motion",
       "label": "减少动态效果"
+    },
+    {
+      "id": "overlay-motion",
+      "label": "浮层开合"
+    },
+    {
+      "id": "selection-feedback",
+      "label": "选中 / 指示器"
+    },
+    {
+      "id": "drag-sort",
+      "label": "拖动 / 排序"
+    },
+    {
+      "id": "press-feedback",
+      "label": "点击反馈"
+    },
+    {
+      "id": "form-feedback",
+      "label": "输入 / 校验"
+    },
+    {
+      "id": "progress-feedback",
+      "label": "进度 / 完成"
+    },
+    {
+      "id": "shared-element",
+      "label": "共享元素"
+    },
+    {
+      "id": "scroll-linked",
+      "label": "滚动联动"
     }
   ]
 };

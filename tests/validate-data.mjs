@@ -42,6 +42,21 @@ for (const effect of effects) {
   assert.equal(resolved.at(-1).id, effect.id);
   assert.equal(new Set(resolved.map(item => item.id)).size, resolved.length);
   assert.ok(lib.bundle(effect.id, effects).includes(effect.prompt));
+  if (effect.authorship === 'curated') {
+    assert.ok(Array.isArray(effect.references) && effect.references.length > 0, effect.id + ': missing references');
+    effect.references.forEach(ref => {
+      assert.ok(typeof ref.title === 'string' && ref.title);
+      const url = new URL(ref.url);
+      assert.equal(url.protocol, 'https:');
+      assert.ok(['docs.flutter.dev', 'api.flutter.dev', 'm3.material.io', 'm2.material.io'].includes(url.hostname), effect.id + ': non-official reference');
+    });
+    assert.ok(Array.isArray(effect.acceptance) && effect.acceptance.length >= 3, effect.id + ': missing observable acceptance checks');
+    effect.acceptance.forEach(check => assert.ok(typeof check === 'string' && check.trim()));
+    assert.ok(effect.dependsOn.includes('module-a-rules'), effect.id + ': missing shared rules');
+    assert.ok(effect.prompt.length >= 200, effect.id + ': incomplete prompt');
+    assert.ok(!effect.prompt.includes('\uFFFD'), effect.id + ': replacement character in prompt');
+    assert.match(effect.prompt, /减少动态|禁用动画|disableAnimations/);
+  }
   for (const position of effect.positions) {
     const result = lib.filter(effects, catalog, { q: effect.title, positions: [position], types: [effect.types[0]] });
     assert.ok(result.some(item => item.id === effect.id), 'Cannot find effect by combined search: ' + effect.id);
@@ -49,7 +64,7 @@ for (const effect of effects) {
 }
 assert.equal(lib.filter(effects, catalog, { q: '', positions: [], types: [] }).length, effects.length);
 assert.equal(lib.filter(effects, catalog, { q: 'definitely-no-such-effect', positions: [], types: [] }).length, 0);
-assert.equal(lib.filter(effects, catalog, { q: '', positions: ['overlay'], types: [] }).length, 0);
+assert.deepEqual([...lib.filter(effects, catalog, { q: '', positions: ['overlay'], types: [] })].map(effect => effect.id), effects.filter(effect => effect.positions.includes('overlay')).map(effect => effect.id));
 assert.equal(lib.filter(effects, catalog, { q: '  FLUTTER  ', positions: [], types: [] }).length, effects.filter(effect => effect.prompt.toLowerCase().includes('flutter')).length);
 assert.deepEqual([...lib.filter(effects, catalog, { q: '减少动态效果', positions: [], types: [] })].map(effect => effect.id), effects.filter(effect => effect.prompt.includes('减少动态效果') || effect.types.includes('reduced-motion')).map(effect => effect.id));
 const bundleOrder = [...lib.resolveDependencies('complete-list', effects)].map(effect => effect.id);
@@ -71,6 +86,12 @@ async function checkLinks(file) {
     assert.ok((await stat(path.resolve(root, path.dirname(file), url))).isFile(), file + ': missing ' + url);
   }
 }
+const demoCSS = await read('styles/motion-tokens.css') + '\n' + await read('demos/shared/demo.css');
+const definedTokens = new Set([...demoCSS.matchAll(/(--[\w-]+)\s*:/g)].map(match => match[1]));
+for (const match of demoCSS.matchAll(/var\((--[\w-]+)\s*\)/g)) assert.ok(definedTokens.has(match[1]), 'Undefined demo CSS token: ' + match[1]);
 await checkLinks('index.html');
-for (const entry of await readdir(path.join(root, 'demos'))) if (entry.endsWith('.html')) await checkLinks('demos/' + entry);
+for (const entry of await readdir(path.join(root, 'demos'))) if (entry.endsWith('.html')) {
+  await checkLinks('demos/' + entry);
+  for (const script of (await read('demos/' + entry)).matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) new vm.Script(script[1], { filename: entry });
+}
 console.log('PASS: source fidelity, schema, taxonomy, demo links, dependency order/dedup/cycles, search/filter combinations, and extensibility.');

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>动效交互预览 · 图片占位过渡</title></head>
+<body><main id="demo"></main>
+<script>
+function mountScene() {
+  'use strict';
+  const api = window.MotionDemo;
+  const root = document.querySelector('#demo');
+  const { node, button, feedback, shell, actions, note, row, to, dragAxis, popup, choices } = window.MotionParts;
+  api.mount(function () {
+    const parent = shell('图片占位过渡', '网页模拟 · 按钮、键盘与快速操作');
+    const status = feedback(parent, '请操作下方示例，观察局部变化。');
+
+    const frame = node('<div class="media-box"><div class="painted-image" role="img" aria-label="山野示意图">山野</div><div class="image-loading">图片加载中…</div><div class="image-error" hidden><p>加载失败</p></div></div>'); parent.append(frame);
+    const picture = frame.children[0]; const loading = frame.children[1]; const error = frame.children[2]; let revision = 0; frame.tabIndex = -1;
+    error.append(button('重试图片', () => load(false)));
+    function load(fail) { const current = ++revision; if (error.contains(document.activeElement)) frame.focus({ preventScroll: true }); api.stop(picture); picture.style.opacity = '0'; loading.hidden = false; error.hidden = true; status.textContent = '模拟图片请求中 · 固定宽高比占位';
+      api.later(() => { if (current !== revision) return; loading.hidden = true; if (fail) { error.hidden = false; status.textContent = '图片失败 · 占位尺寸不变'; } else { to(picture, { opacity: 1 }, '--motion-fast'); status.textContent = '图片已到位 · 周围布局没有移动'; } }, api.loadTime);
+    }
+    actions(parent, [['加载图片', () => load(false)], ['模拟失败', () => load(true)]]); note(parent, '这段说明不会被图片加载顶开；图片是本地示意，不依赖外网。'); load(false);
+
+  });
+}
+
+  let started = false;
+  function start() { if (!started) { started = true; mountScene(); } }
+  function appendStyle(css) { const style = document.createElement('style'); style.textContent = css; document.head.append(style); }
+  if (location.protocol === 'file:' && parent !== window) {
+    function receive(event) {
+      const data = event.data;
+      if (event.source !== parent || data?.channel !== 'motion-library' || data.action !== 'shared-assets') return;
+      const assets = data.assets;
+      if (!assets || !['css', 'runtime', 'components'].every(key => typeof assets[key] === 'string')) return;
+      window.removeEventListener('message', receive);
+      appendStyle(assets.css);
+      for (const source of [assets.runtime, assets.components]) { const script = document.createElement('script'); script.textContent = source; document.head.append(script); }
+      start();
+    }
+    window.addEventListener('message', receive);
+    parent.postMessage({ channel: 'motion-library', action: 'request-assets' }, '*');
+  } else {
+    const styles = ['../styles/motion-tokens.css', 'shared/demo.css'].map(href => new Promise((resolve, reject) => {
+      const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = href; link.onload = resolve; link.onerror = reject; document.head.append(link);
+    }));
+    function load(src) { return new Promise((resolve, reject) => { const script = document.createElement('script'); script.src = src; script.onload = resolve; script.onerror = reject; document.head.append(script); }); }
+    Promise.all(styles).then(() => load('shared/runtime.js')).then(() => load('shared/components.js')).then(start).catch(() => { document.querySelector('#demo').textContent = '预览资源未能加载，请刷新重试。'; });
+  }
+</script>
+</body>
+</html>

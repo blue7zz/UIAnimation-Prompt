@@ -33,6 +33,22 @@ python3 -m http.server 4173 --bind 0.0.0.0
 
 网页仅模拟动效观感，不是 Flutter 实现。系统返回/预测性返回、实际广告 SDK、真机性能与无障碍 API 兼容性须在 Flutter 项目中另行验证。广告全部为无外链的测试示意，不接入广告平台。
 
+### 扩充内容与来源
+
+资料库共 32 个效果：8 条用户原文 + 24 条根据 Flutter / Material 官方文档整理编写的提示词。整理内容不是官方原文，也没有声称经过 Flutter 编译运行。详情页会显示内容来源、具体参考链接与可观察的预览验收要点。
+
+| 组别 | 新增效果 |
+| --- | --- |
+| 弹窗与浮层（5） | 居中对话框、底部弹层、二次确认、提示条与撤销、工具提示 |
+| 导航与标签（5） | Tab 内容切换、Tab 指示器、底部导航、步骤切换、分段选择 |
+| 内容与列表（5） | 折叠面板、拖动排序、滑动删除与撤销、图片占位过渡、搜索建议 |
+| 控件反馈（5） | 按钮加载与结果、收藏反馈、开关切换、表单校验、进度与完成 |
+| 详情与滚动（4） | 共享元素、滚动收缩标题栏、返回顶部、图片切换 |
+
+位置分类从 8 个扩为 13 个，新增按钮/开关、表单/搜索、图片/媒体、提示/反馈、滚动区域。效果类型从 8 个扩为 16 个，新增浮层开合、选中/指示器、拖动/排序、点击反馈、输入/校验、进度/完成、共享元素、滚动联动。原分类 ID 保持不变。
+
+测试分层：脚本检查数据、依赖、检索和原文保真；提示词人工/交叉审查检查具体性、取消和无障碍要求；浏览器逐条操作对照验收要点。网页模拟能验证观感与状态顺序，不能证明某个 Flutter 项目的代码、原生手势或生命周期正确。
+
 ## 新增一个效果：两步
 
 1. 在 `demos/` 新增独立 HTML。复制最接近的现有预览，修改文件内的 `api.mount(function () { ... })` 场景；保留底部兼容加载器，共享部件无需改动。
@@ -53,6 +69,8 @@ python3 -m http.server 4173 --bind 0.0.0.0
 ```
 
 `id` 必须唯一、使用小写英文/数字/连字符，`demo` 使用仓库相对路径。`positions`、`types` 可多选；`dependsOn` 使用效果 ID，不得循环。`prompt` 可使用 `\n` 换行，注意转义引号；页面渲染后的字符串即复制原文。
+
+可选来源字段：用户原文标记 `authorship: 'original'`；整理内容标记 `authorship: 'curated'` 并提供 `references: [{title, url}]`（官方 HTTPS 链接）和 `acceptance: ['可在预览观察的检查项', ...]`（至少 3 条）。未标记时显示“自定义提示词”，不会冒充原文。整理模块建议依赖 `module-a-rules`，并明确取消、减少动态效果和网页/Flutter 的验证边界。
 
 无需注册路由或修改首页 HTML。新增条目自动进入卡片、搜索和筛选；卡片装饰图形自动分配。
 
@@ -94,6 +112,7 @@ Chrome 会阻止隔离的 `file://` iframe 加载本地外部资源，因此双�
 ```sh
 node tests/validate-data.mjs
 node tests/motion-runtime.mjs
+node tests/progress-status.mjs
 find data scripts demos/shared -name '*.js' -exec node --check {} \;
 git diff --check
 ```
@@ -127,6 +146,31 @@ demos/drawer.html                E 抽屉场景
 demos/page-transition.html       F 转场场景
 demos/complete-home.html         完整首页场景
 demos/complete-list.html         完整列表页场景
+demos/dialog-focus.html          居中对话框与焦点
+demos/bottom-sheet.html          底部弹层与拖动
+demos/confirm-dialog.html        二次确认
+demos/snackbar-undo.html         提示条与撤销
+demos/tooltip-reveal.html        工具提示
+demos/tabs-crossfade.html        Tab 内容切换
+demos/tab-indicator.html         Tab 指示器
+demos/bottom-navigation.html     底部导航
+demos/stepper-progress.html      步骤切换
+demos/segmented-control.html     分段选择
+demos/accordion.html             折叠面板
+demos/reorder-list.html          拖动排序
+demos/swipe-dismiss.html         滑动删除与撤销
+demos/image-placeholder.html     图片占位过渡
+demos/search-suggestions.html    搜索建议
+demos/async-button.html          按钮加载与结果
+demos/favorite-toggle.html       收藏反馈
+demos/switch-toggle.html         开关切换
+demos/form-validation.html       表单校验
+demos/progress-status.html       进度与完成
+demos/shared-element.html        共享元素
+demos/collapsing-header.html     滚动收缩标题栏
+demos/back-to-top.html           返回顶部
+demos/image-gallery.html         图片切换
 tests/validate-data.mjs          无第三方依赖的数据与逻辑校验
 tests/motion-runtime.mjs         高度动画阅读锚点及打断/反向回归校验
+tests/progress-status.mjs        进度满值、迟到采样、重置与防重回归校验
 ```

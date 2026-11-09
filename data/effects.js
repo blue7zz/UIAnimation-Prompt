@@ -1,6 +1,7 @@
 window.MotionEffects = [
   {
     "id": "module-a-rules",
+    "authorship": "original",
     "title": "通用动效规则",
     "positions": [
       "general"
@@ -17,6 +18,7 @@ window.MotionEffects = [
   },
   {
     "id": "module-b-menu",
+    "authorship": "original",
     "title": "顶部菜单栏骨架过渡",
     "positions": [
       "list-page"
@@ -35,6 +37,7 @@ window.MotionEffects = [
   },
   {
     "id": "module-c-ad",
+    "authorship": "original",
     "title": "首页广告出现与收起",
     "positions": [
       "home",
@@ -54,6 +57,7 @@ window.MotionEffects = [
   },
   {
     "id": "module-d-list",
+    "authorship": "original",
     "title": "列表入场与局部刷新",
     "positions": [
       "home",
@@ -74,6 +78,7 @@ window.MotionEffects = [
   },
   {
     "id": "module-e-drawer",
+    "authorship": "original",
     "title": "抽屉菜单",
     "positions": [
       "home",
@@ -93,6 +98,7 @@ window.MotionEffects = [
   },
   {
     "id": "module-f-transition",
+    "authorship": "original",
     "title": "页面前进与返回",
     "positions": [
       "home",
@@ -113,6 +119,7 @@ window.MotionEffects = [
   },
   {
     "id": "complete-home",
+    "authorship": "original",
     "title": "首页 + 广告 + 抽屉",
     "positions": [
       "home",
@@ -133,6 +140,7 @@ window.MotionEffects = [
   },
   {
     "id": "complete-list",
+    "authorship": "original",
     "title": "列表页：菜单栏 + 列表",
     "positions": [
       "list-page"
@@ -153,5 +161,888 @@ window.MotionEffects = [
     ],
     "demo": "demos/complete-list.html",
     "updatedAt": "2026-11-09"
+  },
+  {
+    "id": "dialog-focus",
+    "authorship": "curated",
+    "title": "居中对话框",
+    "positions": [
+      "overlay"
+    ],
+    "types": [
+      "overlay-motion",
+      "state-change",
+      "reduced-motion"
+    ],
+    "summary": "展示居中模态层的打开、统一关闭入口与关闭后的焦点返回，避免重复叠层和快速操作残留遮罩。",
+    "prompt": "请先检查现有 Flutter 项目的 SDK 约束、导航层级、主题、焦点及公共模块 A，再最小修改居中对话框；优先复用兼容的 Dialog/showDialog，不为新参数升级 SDK，不引入第三方依赖。网页只展示打开、关闭、遮罩或 ESC 关闭及焦点返回，不增加表单或确认业务。状态为关闭→进入中→打开→退出中→关闭；打开前记录触发按钮焦点，内容淡入配合轻微缩放，遮罩同步变化，重复触发只保留一个实例。关闭按钮、遮罩和 ESC 汇入同一幂等关闭入口，核对项目当前路由的 ESC 行为，缺失时才补局部快捷键。采用框架路由时只请求一次 pop，由路由管理反向动画与覆盖层移除，不先自播退出再 pop；自管覆盖层才在自身退出完成后移除。入场中关闭从当前进度退出，退出期间忽略重复打开，确认覆盖层清理后才允许新实例；不能把 showDialog 返回结果等同于退出动画结束。通过 A 统一时长、曲线、任务失效与自建资源释放，旧回调不能关闭新实例。焦点进入框内适当控件，Tab 与 Shift+Tab 留在框内；关闭且层清理后返回仍存在的原按钮，否则选择合理控件，新实例已打开时不抢回旧焦点。不自动弹键盘，不在 build 中创建焦点节点；只更新弹窗和必要的触发状态。减少动态效果时移除缩放并缩短或跳过过渡，关闭及焦点逻辑不变。按网页单一弹窗、三种关闭入口、焦点边框返回和快速操作无残留验收；这是资料整理方案，不是官方原文或已实测代码。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/dialog-focus.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：showDialog（遮罩、焦点遍历、局部状态及返回结果）",
+        "url": "https://api.flutter.dev/flutter/material/showDialog.html"
+      },
+      {
+        "title": "Flutter 文档：Understanding Flutter's keyboard focus system（焦点请求与节点生命周期）",
+        "url": "https://docs.flutter.dev/ui/interactivity/focus"
+      }
+    ],
+    "acceptance": [
+      "点击打开按钮只出现一个居中弹窗和一层遮罩；再次触发不会叠出第二层。",
+      "分别使用关闭按钮、点击遮罩、按 ESC，弹窗和遮罩均退出，页面恢复可点击。",
+      "弹窗内连续按 Tab 或 Shift+Tab，焦点边框不进入背景；关闭后边框回到打开按钮。",
+      "在入场尚未结束时关闭，再次打开并关闭，最终页面没有残留弹窗、遮罩或不可点击区域。"
+    ]
+  },
+  {
+    "id": "bottom-sheet",
+    "authorship": "curated",
+    "title": "底部弹层",
+    "positions": [
+      "overlay"
+    ],
+    "types": [
+      "overlay-motion",
+      "gesture-back",
+      "reduced-motion"
+    ],
+    "summary": "展示底部弹层的进出、向下拖动跟手，以及未达到关闭阈值时回到原位。",
+    "prompt": "请先检查现有 Flutter 项目的 SDK 范围、安全区、导航、手势及公共模块 A，确认可用接口后最小修改；优先评估兼容的 showModalBottomSheet/BottomSheet，不升级 SDK，不引入第三方依赖。网页只展示按钮打开与关闭、向下拖动跟手和短拖回弹，不强制增加长拖关闭、多档吸附、嵌套滚动、遮罩或 ESC 演示。状态为关闭→进入中→展开→拖动中→回位，关闭按钮使当前状态进入退出并回到关闭。明确可拖区域，指针下移直接改变弹层位移，指针停住且未释放时保持当前位移，上向越界受限；不能在拖动中重复播放入场。短距离、低速度释放回到展开位置，指针取消同样回位；短拖范围集中配置，别把原生速度判定误写成纯距离判定。回位中再次拖动，取消旧补间，从可见位移接续；若现有控件不能满足，只补弹层内部必要适配，不调用私有 API。拖动时关闭也只提交一次，退出中重复打开忽略，清理后才允许新实例。框架路由自行完成退场与移除，不额外再播一套退出，不把结果 Future 当成控制器已可释放。A 统一时长、曲线、过期任务失效和自建资源释放；外部传入的过渡控制器由其所有者在不再被路由使用后释放。只更新弹层局部，保留背景状态。保留可聚焦的关闭按钮，打开时焦点进入弹层，关闭后回到触发处，不自动弹软键盘，不新增键盘拖动。减少动态效果仍保留直接跟手，回位及进出改短过渡或立即到位，不做弹跳。验收观察开关、持续跟手、短拖回位及回位中重新接管，不声称 Flutter 或设备已实测。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/bottom-sheet.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：showModalBottomSheet（模态弹层、拖动开关与控制器释放责任）",
+        "url": "https://api.flutter.dev/flutter/material/showModalBottomSheet.html"
+      },
+      {
+        "title": "Flutter API：BottomSheet（模态与常驻弹层的区别及推荐入口）",
+        "url": "https://api.flutter.dev/flutter/material/BottomSheet-class.html"
+      }
+    ],
+    "acceptance": [
+      "点击打开后弹层从底部出现，点击关闭后完全退出；重复开关不会留下重叠弹层。",
+      "在可拖区域按住并向下移动，弹层随指针持续下移；停止移动但不释放时停在当前位移。",
+      "短距离、低速度拖动后释放，弹层回到拖动前的展开位置，不被关闭。",
+      "回位尚未结束时再次按住向下拖，弹层从当时可见位置继续跟随；重复关闭、再打开后没有第二层弹层或残留遮挡。"
+    ]
+  },
+  {
+    "id": "confirm-dialog",
+    "authorship": "curated",
+    "title": "二次确认",
+    "positions": [
+      "overlay",
+      "notifications"
+    ],
+    "types": [
+      "overlay-motion",
+      "press-feedback",
+      "reduced-motion"
+    ],
+    "summary": "把取消与确认分开：取消保持业务状态，确认仅执行一次，关闭后焦点回到合理位置。",
+    "prompt": "请先检查现有 Flutter 项目的 SDK 兼容性、待确认操作、导航结果处理、焦点约定及公共模块 A，再做最小修改；优先复用兼容的 AlertDialog/showDialog，不引入第三方依赖，不改全局导航或为新参数升级 SDK。网页预览仅展示发起操作、取消不修改、确认只执行一次和焦点返回，不附加输入验证、倒计时、网络请求或撤销提示条。打开前仅记录操作目标与原焦点，不先执行再回滚；状态按空闲→弹窗进入→等待选择→已取消或已确认→退出处理。取消结果统一归为未确认，包括项目原有关闭路径返回的空结果，业务与可见数据均不改变；确认在接受首次触发的当下锁定本次操作，后续点击、回车或动画回调不得重复提交，由唯一结果处理位置执行业务动作。快速双击只开一个实例，入场中取消从当前进度退出；由路由执行一次 pop，不另播退出，待覆盖层清理后才放开再次发起；本次结果一旦确定，快速反向操作不能把取消改成确认或让旧回调作用于下一次弹窗。进出动效、取消令牌与资源释放接入 A，状态更新局限于弹窗按钮和实际受影响的结果区域。默认焦点落在取消等非破坏性操作，Tab 在弹窗内部循环，回车只激活当前聚焦按钮，不做无条件全局确认；不自动唤起软键盘。退出后焦点返回原触发按钮，若该按钮已因业务操作移除则落到相邻可操作控件。减少动态效果时去掉缩放与明显位移，保留选择、锁定和焦点语义。验收观察取消前后内容一致、确认只产生一次可见结果及关闭后的焦点边框，不声称这等同于真实 SDK 或设备实测。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/confirm-dialog.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：AlertDialog（标题、内容、操作按钮及使用示例）",
+        "url": "https://api.flutter.dev/flutter/material/AlertDialog-class.html"
+      },
+      {
+        "title": "Flutter API：showDialog（结果 Future、模态路由与焦点遍历）",
+        "url": "https://api.flutter.dev/flutter/material/showDialog.html"
+      }
+    ],
+    "acceptance": [
+      "打开确认框后选择取消，页面原有内容与业务结果保持不变。",
+      "确认按钮首次激活后立即进入不可重复触发状态；快速双击或连续回车仅产生一次可见结果变化。",
+      "默认焦点位于取消按钮，Tab 在框内移动；回车激活当前按钮，而不是无论焦点在哪都确认。",
+      "取消或确认关闭后，焦点边框回到原发起按钮；若其被操作移除，焦点落到相邻可操作控件。"
+    ]
+  },
+  {
+    "id": "snackbar-undo",
+    "authorship": "curated",
+    "title": "提示条与撤销",
+    "positions": [
+      "notifications",
+      "list-page"
+    ],
+    "types": [
+      "overlay-motion",
+      "state-change",
+      "reduced-motion"
+    ],
+    "summary": "以单条待确认删除事务管理撤销与到期；新删除替换旧提示并使旧计时失效，避免串撤销。",
+    "prompt": "先检查 Flutter 项目的 SDK、稳定 id、删除流程、ScaffoldMessenger 及公共模块 A，兼容范围内最小修改，不升级、不引入第三方依赖。网页只展示单条删除、撤销、到期确定和新操作替换旧计时，不加确认框或批量操作。状态为无待处理→暂时移除可撤销→已撤销或到期；删除保存 id、数据与原位置，提示条提供撤销。演示撤销窗口可设为五秒，标明它是可配置业务示例而非官方默认；不能仅设 duration 就假定带 action 的提示会自动消失：先核对本版持久化策略，支持 persist 时显式配置，否则由 A 统一截止与移除，不强用新参数。窗口从提示可见时起算，过期确认指删除最终确定，不是再弹一次对话框。撤销只恢复当前待处理项一次，并尽量回到原位置；撤销与到期同时发生时按同一事务锁定首个有效结果。窗口内再删除另一项，确定旧项删除并取消旧计时、使旧回调失效，再替换提示启动新窗口；不得让默认提示队列延迟新操作，旧到期事件也不能收起新提示或恢复错误条目。通过 A 管理计时取消、动效时长曲线与释放，仅局部更新目标行和提示。提示不自动抢焦点、不弹键盘；删除控件消失后焦点移到邻近控件，撤销可由 Tab 和回车操作，提示退出前妥善转移其内部焦点。原生提示可能因无障碍设置或撤销按钮焦点延长停留，业务截止须同步暂停或延后；五秒验收只用于普通且未聚焦撤销的模式，不得保留可点但已失效的按钮。减少动态效果只简化进出，不压缩撤销窗口。验收看恢复、到期和旧计时不干扰新提示；未实测 Flutter。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/snackbar-undo.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：ScaffoldMessengerState.showSnackBar（默认排队与提示移除方式）",
+        "url": "https://api.flutter.dev/flutter/material/ScaffoldMessengerState/showSnackBar.html"
+      },
+      {
+        "title": "Flutter API：SnackBar（可选操作、显示时长与无障碍超时行为）",
+        "url": "https://api.flutter.dev/flutter/material/SnackBar-class.html"
+      }
+    ],
+    "acceptance": [
+      "删除一条后该条目从列表消失，并出现对应提示；在窗口内撤销只恢复该条一次，位置回到原处。",
+      "普通演示模式且撤销按钮未获焦时，从提示可见起等待示例五秒窗口结束，提示退出、条目保持删除，旧撤销按钮不可再操作。",
+      "先删 A，约两秒后删 B，提示立即改为 B；越过 A 原本的截止时刻后，B 的撤销仍可用且能恢复 B，A 不恢复。",
+      "用键盘删除后焦点边框仍位于列表可操作控件；Tab 可到达撤销，回车恢复条目且提示关闭后焦点不滞留在隐藏按钮。"
+    ]
+  },
+  {
+    "id": "tooltip-reveal",
+    "authorship": "curated",
+    "title": "工具提示",
+    "positions": [
+      "notifications",
+      "controls"
+    ],
+    "types": [
+      "overlay-motion",
+      "press-feedback",
+      "reduced-motion"
+    ],
+    "summary": "补齐悬停、聚焦与点击三类触发及离开、ESC 退出，让提示提供说明而不形成模态遮挡。",
+    "prompt": "先检查 Flutter 项目的 SDK、Tooltip、指针与焦点事件及公共模块 A，再最小修改工具提示；优先复用兼容实现，不为新参数升级，不引入第三方依赖。网页仅展示悬停、聚焦或点击显示，离开或 ESC 关闭及不拦截页面，不新增菜单、富内容卡片或可交互气泡。状态为隐藏→等待→可见→退出→隐藏；悬停可短暂等待，Tab 聚焦或点击请求显示，同一时刻只有一个气泡。指针离开、焦点移出或 ESC 取消待显示任务并退出，关闭优先于同轮旧显示任务；只有新的进入、聚焦或点击才能重新打开，ESC 后仍悬停不能立即复现。先核对本版本 Tooltip 的触发与退出能力；ensureTooltipVisible 不代表离开后一定自动隐藏，默认悬停也不等于支持聚焦触发。若缺少当前实例的受控退出入口，只为该提示补最小事件桥接和局部覆盖层，不编造实例 hide 方法，不用全局 dismissAllToolTips 清除其他提示，也不叠出内置与自建两份气泡。快速离开再进入从当前视觉值接续或重新安排一次有效显示，旧延迟与退出回调不能覆盖新状态。A 统一等待、动效时长曲线、可取消任务和自建资源释放；仅更新触发状态与气泡层。气泡不抢焦点、不进入 Tab 顺序、不唤起键盘，触发器保留原键盘激活及可见焦点；文本作为合理说明且避免重复语义。覆盖层忽略指针命中，不加全屏遮罩或滚动锁。减少动态效果改直接显示或短淡入淡出，触发及退出规则不变。验收三种入口、离开及 ESC 后无迟到复现，背景仍能点击滚动；未实测 Flutter。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/tooltip-reveal.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：Tooltip（悬停、触发模式、时序与命中测试相关属性）",
+        "url": "https://api.flutter.dev/flutter/material/Tooltip-class.html"
+      },
+      {
+        "title": "Flutter API：TooltipState.ensureTooltipVisible（程序化显示及退出边界）",
+        "url": "https://api.flutter.dev/flutter/material/TooltipState/ensureTooltipVisible.html"
+      }
+    ],
+    "acceptance": [
+      "分别用鼠标悬停、Tab 聚焦、点击触发器，均能看到同一份提示，且同一时刻不出现重复气泡。",
+      "指针离开或焦点移走后提示关闭；在显示等待结束前离开，稍后也不会突然出现提示。",
+      "按 ESC 关闭后，即使指针仍停在触发器上也不立即重开；离开再进入才能再次显示。",
+      "提示显示时，页面其他按钮仍可点击、页面仍可滚动；Tab 不进入提示气泡，焦点不被气泡抢走。"
+    ]
+  },
+  {
+    "id": "tabs-crossfade",
+    "authorship": "curated",
+    "title": "Tab 内容切换",
+    "positions": [
+      "tabs"
+    ],
+    "types": [
+      "state-change",
+      "page-transition",
+      "reduced-motion"
+    ],
+    "summary": "三页局部淡入淡出，按页面标识保留各自计数；快速切换只落到最后选择。",
+    "prompt": "先检查现有 Flutter 项目的 SDK 约束、Tab 结构、状态归属及公共模块 A 的接口，在兼容范围内最小修改，不升级版本、不引入第三方依赖。实现三个 Tab 的局部内容淡入淡出，每页只有独立计数展示与加一操作，不增加滑动翻页、路由或弹窗。点击未选中 Tab 为触发；由单一目标索引更新选中态，当前内容淡出、目标内容淡入；目标确定后退场页立即退出点击与焦点，稳定后只显示目标页。计数按稳定页面标识存放在切换层外，切走不清零，退场副本不得重复触发业务动作。若使用 AnimatedSwitcher，为不同页面配置稳定键，注意快速替换可能同时存在多个退场子项，不把它当状态缓存，也不假设相同 key 的重新进入能复用尚在退出的实例。连续切换或立即反向时取消过时收尾，以最后一次选择为准，不先播完排队动画；重复点当前页不重播。复用 A 的统一时长、曲线、取消及资源释放规则；离开组件时终止过渡并移除监听，旧回调不得写回。更新限于内容区和必要的选中标记，不重建整个页面。保留键盘遍历、激活与可见焦点，隐藏或退场内容不能被键盘进入；不新增输入框或抢占焦点。减少动态效果时省略淡入淡出，直接呈现目标页，计数逻辑不变。网页仅演示三页切换与计数保留；按下列可见结果验收，并注明这是资料整理方案，不是已实测的 Flutter 代码。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/tabs-crossfade.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：TabBar（标签与控制器的数量对应）",
+        "url": "https://api.flutter.dev/flutter/material/TabBar-class.html"
+      },
+      {
+        "title": "Flutter API：AnimatedSwitcher（默认交叉淡化、键与多个退场子项）",
+        "url": "https://api.flutter.dev/flutter/widgets/AnimatedSwitcher-class.html"
+      }
+    ],
+    "acceptance": [
+      "依次点击三个 Tab，内容标题与选中标签对应；切换只发生在内容区，外层标题和 Tab 栏位置不变。",
+      "第一页加到 2、第二页加到 1，切到第三页后逐页返回，仍分别显示 2 和 1。",
+      "快速点击第二页、第三页、第一页，结束后只显示第一页内容，且只有第一页的加一按钮可操作。",
+      "连续点击当前 Tab，计数不变，内容不再次闪退或重播入场。"
+    ]
+  },
+  {
+    "id": "tab-indicator",
+    "authorship": "curated",
+    "title": "Tab 指示器",
+    "positions": [
+      "tabs"
+    ],
+    "types": [
+      "selection-feedback",
+      "reduced-motion"
+    ],
+    "summary": "指示器从当前绘制位置连续转向新目标，快速点击后的选中项与最终位置一致。",
+    "prompt": "先检查现有 Flutter 工程的 SDK、TabBar 与 TabController 绑定、主题以及公共模块 A，优先复用兼容的内置机制做最小修改；不升级版本、不引入第三方依赖，也不为较新的指示器参数设版本门槛。网页只呈现 Tab 标签及其指示器，不新增内容翻页、计数、滑动手势或导航。点击不同标签触发目标索引变更；区分逻辑选中项与指示器当前绘制位置，指示器由当前位置移动至目标标签区域，抵达后退出过渡态。TabController.animateTo 从当前动画值继续，但不能据此保证本版本 TabBar 的矩形插值在快速改目标时一定连续；先核对现有指示器，满足则复用，否则仅由一套局部控制器管理当前矩形到目标矩形，禁用竞争的默认指示器。运动中点击另一标签或立即反向，应撤销旧目标的收尾，从当前可见位置重新定向，不能跳回上一标签起点，也不能排队补播；最终位置及选中样式必须归于最后一次有效点击。重复点击当前目标不重启动画。尺寸取自现有标签布局，不硬编码屏幕坐标。时长、曲线、可取消行为和资源释放统一走 A，组件退出时移除监听并阻止旧回调回写。逐帧更新限定于指示器及必要的选中样式，标签布局不随动画反复重建。保留键盘遍历、激活和可见焦点，不把焦点移到装饰指示器；焦点态不等同于选中态。减少动态效果时直接对齐目标，仍立即响应新选择。按下列网页可见结果验收；这是根据资料编写的交互方案，不是官方原文或已实测 Flutter 代码。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/tab-indicator.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：TabController.animateTo（从当前动画值前往目标）",
+        "url": "https://api.flutter.dev/flutter/material/TabController/animateTo.html"
+      },
+      {
+        "title": "Flutter API：TabBar（控制器、指示器及选中样式）",
+        "url": "https://api.flutter.dev/flutter/material/TabBar-class.html"
+      }
+    ],
+    "acceptance": [
+      "从首项点击末项，指示器经过中间位置到达末项，标签与外层布局不移动。",
+      "向末项移动尚未结束时点击首项，指示器从当时可见位置转向，不先跳到任一端点。",
+      "快速交替点击多个标签后停止，只有最后点击项保持选中，指示器最终与该项对齐且不再回跳。",
+      "重复点击当前目标，指示器不回到起点、不闪烁，也不增加第二条指示器。"
+    ]
+  },
+  {
+    "id": "bottom-navigation",
+    "authorship": "curated",
+    "title": "底部导航",
+    "positions": [
+      "tabs",
+      "home"
+    ],
+    "types": [
+      "selection-feedback",
+      "state-change",
+      "reduced-motion"
+    ],
+    "summary": "三个分区在同一页面容器内切换，各自计数保留，重复选择不新增路由层级。",
+    "prompt": "先检查现有 Flutter 项目的 SDK、底部导航组件、路由结构、分区状态与公共模块 A；沿用兼容的 NavigationBar 或现有等价组件做最小修改，不强制迁移版本、不引入第三方依赖。实现三个分区，每区仅有名称、独立计数和加一操作；网页不新增详情页、嵌套导航、返回按钮或历史记录面板。点击其他目的地触发单一选中索引更新，导航选中标记与对应内容同步改变，必要的局部过渡结束后进入稳定态。分区切换是同层选择，不调用 push，也不向网页历史逐次追加记录；重选当前项保持原样，不清零、不重新入栈。计数按分区稳定标识保存在常驻状态中；可沿用 IndexedStack 等保活容器，但不可见分区应停止无关动画并退出焦点遍历，不能仅靠透明度隐藏。连续点击或快速反向时取消旧目标的收尾，直接服务最后一次选择，旧完成回调不能把分区切回。A 统一提供时长、曲线、可取消策略与资源释放；卸载时停止控制器、移除监听，不在销毁后更新状态。选中更新只影响导航标记和内容容器，计数加一只更新所属局部，不重建整个应用。保留键盘遍历、激活及可见焦点，隐藏分区不能接收键盘或点击，不抢占已有输入焦点。减少动态效果时取消装饰性过渡，直接展示目标分区，计数与选中逻辑不变。按下列网页可见结果验收；注明方案由资料整理，未宣称真实 SDK 或物理设备已验证。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/bottom-navigation.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：NavigationBar（目的地与选中索引）",
+        "url": "https://api.flutter.dev/flutter/material/NavigationBar-class.html"
+      },
+      {
+        "title": "Flutter API：IndexedStack（显示单个子项并保留各自状态的示例）",
+        "url": "https://api.flutter.dev/flutter/widgets/IndexedStack-class.html"
+      }
+    ],
+    "acceptance": [
+      "逐个点击三个底部目的地，每次只出现对应分区内容，底部选中项与分区名称一致。",
+      "将三个分区计数分别加到 1、2、3，轮换返回后仍分别显示 1、2、3。",
+      "快速切到第二、第三、第一分区，停止后只保留第一分区可操作，旧分区不再覆盖回来。",
+      "连续重选当前分区，计数与分区名称保持原值，不闪现额外页面或重播入场；轮换后每次仍只有一个分区可操作。"
+    ]
+  },
+  {
+    "id": "stepper-progress",
+    "authorship": "curated",
+    "title": "步骤切换",
+    "positions": [
+      "forms",
+      "tabs"
+    ],
+    "types": [
+      "state-change",
+      "progress-feedback",
+      "reduced-motion"
+    ],
+    "summary": "上一步与下一步驱动局部内容过渡，首尾按钮禁用，快速反向以最新步骤为准。",
+    "prompt": "先检查现有 Flutter 工程的 SDK、步骤组件、当前步骤数据与公共模块 A，沿用兼容的 Stepper 或现有布局做最小修改，不升级版本、不引入第三方依赖。仅实现上一步、下一步、首尾禁用及局部内容过渡；步骤数量沿用项目，无现成内容时用三个静态步骤，不新增表单校验、提交、网络请求或点击步骤标题跳转。按钮激活是触发，父级维护唯一的当前步骤索引；Stepper 的回调只作为意图入口，不假设控件会自动推进。先将目标限制在合法范围，再更新步骤标记并使内容区旧内容退场、新内容入场；完成后只保留目标内容可交互。首步禁用上一步，末步禁用下一步，不循环、不越界；上一步仅回退，不清空流程。过渡中再次点击以最近接受的目标索引计算相邻步，快速反向应取消过时收尾，不排队播放旧步骤；旧回调不能覆盖最新索引。若选 AnimatedSwitcher，用步骤标识区分内容并管理多个退场子项，退场层屏蔽点击与焦点。时长、曲线、可取消规则及释放统一复用 A；组件退出时停止过渡、解除监听，销毁后不再写状态。重建限定于步骤标记、按钮禁用态及内容区，不让外层页面随之位移。保留键盘遍历、按钮激活和可见焦点；若当前按钮变为禁用，让焦点留在可用控制区而非隐藏内容，不新增输入框或强制唤起键盘。减少动态效果时直接替换内容，边界逻辑不变。按下列网页可见结果验收，并说明这是资料整理方案，不是已实测 Flutter 代码。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/stepper-progress.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：Stepper（父级维护 currentStep 与控制回调）",
+        "url": "https://api.flutter.dev/flutter/material/Stepper-class.html"
+      },
+      {
+        "title": "Flutter API：AnimatedSwitcher（内容过渡与子项标识）",
+        "url": "https://api.flutter.dev/flutter/widgets/AnimatedSwitcher-class.html"
+      }
+    ],
+    "acceptance": [
+      "首步上一步呈禁用态，点击不变；逐步前进至末步后，下一步禁用且点击不越界。",
+      "每次点击可用的上一步或下一步，步骤标记与内容标题同步对应相邻步骤，不跨步或循环。",
+      "前进过渡未结束即点击上一步，最终回到原步骤，旧的前进入场不会再次覆盖。",
+      "切换时只在步骤内容区出现退场与入场，外层标题位置不变；稳定后没有上一段内容残留或可点击的重叠层。"
+    ]
+  },
+  {
+    "id": "segmented-control",
+    "authorship": "curated",
+    "title": "分段选择",
+    "positions": [
+      "tabs",
+      "controls"
+    ],
+    "types": [
+      "selection-feedback",
+      "state-change",
+      "reduced-motion"
+    ],
+    "summary": "单选背景跟随当前目标，结果区局部更新，快速反向从背景当前位置接续。",
+    "prompt": "先检查现有 Flutter 工程的 SDK、分段控件、选中值来源和公共模块 A，在现有兼容范围最小修改，不升级版本、不引入第三方依赖。沿用已有少量选项，无现成内容时仅用三个静态选项与对应结果文案。保持单选且始终有一项选中；若当前 SDK 支持 SegmentedButton 可复用其选择语义，否则保留现有兼容控件，不强制使用新 API。网页范围只有选中背景跟随、结果区局部更新及快速反向，不增加筛选表单、请求、路由或多选功能。点击未选中项触发唯一选中值更新，结果立即对应最新选择；背景由当前可见位置移动到目标段，抵达后退出过渡态。不要假定内置 SegmentedButton 自带跨段滑块；必要时只补一层不参与命中和焦点的背景装饰，沿用原控件交互。连续选择或立即反向时取消旧目标，从当前背景位置重新定向，不能归零、排队或由旧完成回调改回结果；重复点已选项不取消选择、不重播。时长、曲线、可取消与资源释放走 A；若使用 AnimationController，等待可取消结果时处理 TickerCanceled，不等待可能因取消而不再完成的普通 TickerFuture；卸载时释放自建资源。逐帧更新只重绘背景，选择变化只更新选中样式和结果区，外层页面不重建。保留键盘遍历、激活及可见焦点，将焦点态与选中态区分，不抢焦点或唤起软键盘。减少动态效果时背景直接落到目标，结果更新规则不变。按下列网页可见结果验收；注明这是根据文档整理的方案，不是官方原文或已实测 Flutter 代码。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/segmented-control.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：SegmentedButton（selected 集合、单选及选择回调）",
+        "url": "https://api.flutter.dev/flutter/material/SegmentedButton-class.html"
+      },
+      {
+        "title": "Flutter API：AnimationController.animateTo（当前位置与取消语义）",
+        "url": "https://api.flutter.dev/flutter/animation/AnimationController/animateTo.html"
+      }
+    ],
+    "acceptance": [
+      "点击任意其他分段，只保留一项选中，结果文案立即对应该项，背景最终对齐该段。",
+      "背景向另一段移动尚未结束时点回原段，背景从可见中间位置返回，不先跳回起点。",
+      "快速交替点击后停止，选中样式、背景位置和结果文案均归于最后一次选择，旧结果不再闪回。",
+      "重复点击当前选项不清空选择、不重播背景移动；切换过程中外层标题和分段布局不移动。"
+    ]
+  },
+  {
+    "id": "accordion",
+    "authorship": "curated",
+    "title": "折叠面板",
+    "positions": [
+      "detail",
+      "list-page"
+    ],
+    "types": [
+      "height-change",
+      "reduced-motion"
+    ],
+    "summary": "以内容高度展开/收起为核心，处理中途反向，让下方内容随实际布局同步移动。",
+    "prompt": "请在现有 Flutter 项目中实现折叠面板。先检查 SDK 约束、布局、现有展开组件与状态归属，确认当前版本支持的接口，再最小修改；不要求升级、不引入第三方依赖，也不要改动原有八条提示词。依赖公共模块 A 的统一时长、曲线、可取消任务和资源释放，不另建全局动画体系。优先评估现有 ExpansionTile 或 AnimatedSize 能否满足需求，不叠加两套高度动画；不能靠销毁后重建内容假装从当前高度反向。\n触发为点击标题，目标状态只有展开与收起；内容区按实际高度变化并裁剪，下方内容参与同一次布局，不用只改变透明度或绝对定位伪装展开。进行中再次点击，从当前可见高度转向最新目标，不排队、不先跳到端点；取消旧完成回调，最终只以最新目标收尾。内容高度变化时重新测量，不写死最大高度。\n状态与更新限制在面板及必要布局祖先，不重建无关页面。标题保持清晰焦点并支持 Enter/空格；收起前若焦点在内容中，先移回标题，隐藏内容退出键盘遍历与命中。减少动态效果由 A 读取当前平台可用设置，直接完成高度切换，保留下方内容正确位置；离开页面时取消待办并释放本地监听与控制器。\n网页预览只演示高度展开/收起、快速反向、下方内容跟随，不额外要求互斥分组、路由或持久化。验收以连续点击后终态符合最后一次操作、收起无残留可见内容、下方参照元素始终贴随面板底部为准。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/accordion.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：AnimatedSize",
+        "url": "https://api.flutter.dev/flutter/widgets/AnimatedSize-class.html"
+      },
+      {
+        "title": "Flutter API：ExpansionTile",
+        "url": "https://api.flutter.dev/flutter/material/ExpansionTile-class.html"
+      }
+    ],
+    "acceptance": [
+      "展开时内容区高度从收起值增加，收起时回到收起值；收起后看不到被裁剪内容。",
+      "在展开尚未结束时再次点击，面板立即转向收起；连续切换后终态与最后一次点击一致，不补播旧动作。",
+      "在面板下方放置参照内容，展开及收起过程中它始终跟随面板底部，不被覆盖，也不预留完整展开后的空洞。"
+    ]
+  },
+  {
+    "id": "reorder-list",
+    "authorship": "curated",
+    "title": "拖动排序",
+    "positions": [
+      "list-page"
+    ],
+    "types": [
+      "drag-sort",
+      "partial-refresh",
+      "reduced-motion"
+    ],
+    "summary": "用稳定 id 维护条目身份，统一指针与键盘排序入口，并在拖动取消时恢复开始顺序。",
+    "prompt": "先检查 Flutter 列表的 SDK、稳定 id、焦点、排序回调及公共模块 A，再最小修改，不升级、不引入第三方依赖。先核对本版本回调的新旧索引语义，只在旧接口需要时修正向后移动的插入索引，不能无条件减一。优先评估现有排序组件；若现有组件无取消入口，在兼容时局部用 ReorderableList，通过 GlobalKey 或 of 调用公开 cancelReorder；不用私有 State，终止拖动不等于顺序回滚。\n按住手柄进入空闲→拖动预览→提交或取消→空闲；开始保存已提交的 id 顺序，拖动条目跟指针、邻项为当前落点腾位，松手只提交一次。快速跨越与反向只更新最新落点，不排队补移。按 ESC 或收到指针取消时，先令本次提交失效并终止活动拖动，再按快照恢复顺序和移除代理；旧排序回调不得重新提交。每项以稳定 id 作 key，不能用位置或临时值，行内内容随同一 id 移动。\n手柄获焦时以局部 Alt+上/下键逐项移动并提交，首尾不越界，不拦截输入框编辑；焦点随同一 id，取消后回原条目。A 统一时长、曲线、任务取消与自建资源释放；只更新排序区域及必要布局，不逐帧重建整页。减少动态效果去掉抬升和邻项补间，保留直接跟手与落点显示；卸载前终止本地拖动并释放自有资源。\n网页仅演示指针排序、键盘上移下移、可见稳定 id 与取消恢复，不增加跨列表拖放或服务端保存。验收检查落点顺序、id 与内容对应，以及 ESC 后完整恢复、代理消失且可再次拖动；这是资料整理方案，未编译运行 Flutter。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/reorder-list.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：ReorderableList（拖动监听与公开状态访问）",
+        "url": "https://api.flutter.dev/flutter/widgets/ReorderableList-class.html"
+      },
+      {
+        "title": "Flutter API：ReorderableListState.cancelReorder（终止活动拖动）",
+        "url": "https://api.flutter.dev/flutter/widgets/ReorderableListState/cancelReorder.html"
+      }
+    ],
+    "acceptance": [
+      "用指针将中间行拖过相邻行后松手，列表按落点排序；行上可见的 id 和内容仍一一对应。",
+      "拖动中向上再向下跨越条目，松手后只保留最后落点顺序，没有延迟补移。",
+      "手柄获焦后按 Alt+上/下键，每次只移动一位，焦点标记仍在同一 id；首尾继续外移不改变顺序。",
+      "拖动预览已经改变排列时按 Esc，完整恢复开始前顺序，拖动代理消失；随后能重新拖动。"
+    ]
+  },
+  {
+    "id": "swipe-dismiss",
+    "authorship": "curated",
+    "title": "滑动删除",
+    "positions": [
+      "list-page"
+    ],
+    "types": [
+      "drag-sort",
+      "gesture-back",
+      "height-change",
+      "reduced-motion"
+    ],
+    "summary": "行向左跟手，以距离区分回弹与删除，并通过撤销恢复原条目的 id 和相对位置。",
+    "prompt": "请在现有 Flutter 列表中实现向左滑动删除与撤销。先检查 SDK、滚动手势竞争、稳定业务 id 和现有删除逻辑，先核对 Dismissible；其甩动可越过距离门槛，并不保证回弹中可接管，不能仅设置 dismissThresholds 就宣称满足；必要时只为当前行补可取消的局部拖动实现；最小修改，不升级、不引入第三方依赖。依赖公共模块 A 统一时长、曲线、可取消任务与资源释放。\n从空闲经向左拖动进入跟手态，只改变当前行水平位移并露出删除背景。以可配置距离阈值区分退出：例如未到行宽四成松手即回弹，到达后松手才滑出并收起行高；不能让短距离快速甩动绕过本示例阈值。左为物理左向，不把 endToStart 在所有文字方向下都当向左。右向不删除，提交前指针取消则回位；回弹中再次向左拖，从当前位置接管，旧完成回调失效。删除只提交一次，以 id 定位数据，不沿用可能过期的行索引。\n提交时保存原条目及邻项位置依据，显示局部撤销入口。撤销恢复同一 id、内容和可确定的原相对位置，多次触发不重复插入；旧退出动画不得删掉刚恢复的条目。只更新当前行、必要列表布局和撤销区域。撤销可键盘激活；被删行含焦点时转移至撤销入口或相邻可用项，恢复后不强行抢焦点。减少动态效果时保留跟手与阈值判断，省略滑出和回弹补间；离开组件取消计时与监听，并释放自有资源。\n网页范围仅为左滑跟手、短拖回弹、长拖删除、撤销恢复同 id，不强制真实接口或二次确认。验收观察短拖不减行、长拖仅删目标、撤销后 id 与内容不变且无重复。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/swipe-dismiss.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：Dismissible",
+        "url": "https://api.flutter.dev/flutter/widgets/Dismissible-class.html"
+      },
+      {
+        "title": "Flutter API：Dismissible.dismissThresholds（距离比例与甩动例外）",
+        "url": "https://api.flutter.dev/flutter/widgets/Dismissible/dismissThresholds.html"
+      }
+    ],
+    "acceptance": [
+      "向左拖动时仅目标行跟随指针，露出行后删除背景；向右拖动不会删除。",
+      "未达距离阈值松手后回到原位，列表行数不变；回弹中反向再拖不会先跳回端点。",
+      "越过阈值松手后只移除目标行，后续行补位，局部撤销入口出现。",
+      "点击撤销，原 id 与原内容在对应相对位置恢复；重复激活不会出现两份，等待旧动画结束也不会再次消失。"
+    ]
+  },
+  {
+    "id": "image-placeholder",
+    "authorship": "curated",
+    "title": "图片占位过渡",
+    "positions": [
+      "media",
+      "detail"
+    ],
+    "types": [
+      "skeleton-transition",
+      "state-change",
+      "reduced-motion"
+    ],
+    "summary": "在固定比例容器内切换占位、成功与失败状态，用模拟慢网和重试验证周围布局不移动。",
+    "prompt": "请为现有 Flutter 图片区域补充占位过渡。先检查 SDK、资源来源、缓存策略、当前图片组件及约束布局，核对 Image 的首帧与错误回调支持情况，再做最小修改；不升级、不引入第三方依赖、不改原有八条。依赖公共模块 A 的统一时长、曲线、任务取消与资源释放，不为了占位增加新的图片加载库。\n用确定的宽高比容器包住占位、图片和错误视图，加载前就占满同一空间；裁剪与适配方式一致，不让图片固有尺寸改变周围布局。触发为开始加载或重试，状态依次为占位加载中、首帧就绪后显示图片，或失败后显示说明和重试。仅在首帧可用时淡入一次，不把请求结束当作画面已解码；缓存同步命中可直接显示，不强制闪回占位，也不做虚假的连续进度。\n重试建立新请求标识，旧成功、旧错误与已取消计时不得覆盖新状态；frameBuilder 不是请求取消接口，不能取消的解码或响应只丢弃旧结果；快速切换模拟结果时只接受最新任务，不排队播放淡入。仅更新图片槽及其状态，不每帧重建整个卡片或页面。重试按钮支持 Tab 与 Enter/空格，替换错误视图前妥善安置已有焦点，不让非交互图片进入键盘遍历。减少动态效果时直接切换内容并使用静态占位；卸载时经 A 取消待办，释放自己创建的监听，忽略迟到回调。\n网页只提供固定比例占位及可重复的模拟加载、失败、重试和慢网，不依赖真实网络，不增加灯箱、缩放或上传。验收需在慢网等待、失败、重试与成功各态对照周围参照内容，位置和容器边界均不移动，旧结果不闪回。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/image-placeholder.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：Image",
+        "url": "https://api.flutter.dev/flutter/widgets/Image-class.html"
+      },
+      {
+        "title": "Flutter API：Image.frameBuilder",
+        "url": "https://api.flutter.dev/flutter/widgets/Image/frameBuilder.html"
+      }
+    ],
+    "acceptance": [
+      "模拟慢网时占位持续显示，图片槽保持指定比例，槽上下的参照内容位置不变。",
+      "模拟成功后在原槽内显示图片；容器边界与占位时一致，不挤动周围布局。",
+      "模拟失败后同一槽内出现错误及重试入口，重试依次回到加载态和结果态，不额外增高卡片。",
+      "慢任务尚未结束时切换至新的模拟结果，等待旧任务完成后画面仍保留新状态，不闪回旧图或旧错误。"
+    ]
+  },
+  {
+    "id": "search-suggestions",
+    "authorship": "curated",
+    "title": "搜索建议",
+    "positions": [
+      "forms",
+      "list-page"
+    ],
+    "types": [
+      "form-feedback",
+      "partial-refresh",
+      "state-change",
+      "reduced-motion"
+    ],
+    "summary": "输入驱动模拟异步建议，以请求代次屏蔽过时响应，覆盖空结果、错误重试与清空。",
+    "prompt": "请在现有 Flutter 搜索输入框下增加异步建议状态。先检查 SDK、当前输入控制器、焦点、建议组件和请求层，核对 Autocomplete 等现有接口；其默认选项层不显示空列表，不能直接承担空态与错误态，必要时在输入框下补局部状态区；只作局部最小修改，不升级、不引入第三方依赖。依赖公共模块 A 统一时长、曲线、可取消任务和资源释放，不新增全局搜索框架。\n触发为已提交的文本变化，可设置短防抖；输入法组合过程中不强改文本或选区，也不对每个组合片段启动检索。状态包括初始关闭、等待、建议列表、空结果和错误。每次新查询递增请求代次并取消上次防抖；能取消的请求立即取消，不能取消的响应按代次和查询值丢弃，不能用旧列表冒充新结果。重试只针对当前查询，退场后迟到的成功或错误都不得重开面板。\n清空须同步清除文本、建议和错误，失效全部未完成任务并回到关闭态；沿用项目既有失焦与关闭约定；若已退出建议态，则使待办失效，不额外强制增加 ESC、选择跳转等预览交互。快速输入或反向删字时只呈现最新查询，面板转场可中断，不积压动画。局部更新建议区域，不重建输入框以免丢焦点、光标或中文组合状态。清空及重试支持键盘激活，清空后焦点留在输入框，不抢走已有编辑按键。减少动态效果时直接切换面板状态；卸载时经 A 取消任务，只释放自身拥有的控制器与监听。\n网页仅模拟输入后的异步结果、过时响应屏蔽、空/错/重试和清空，不强制真实接口、选中跳转或历史记录。验收旧请求后返回也不覆盖新文本，清空后不复现；空态与错误态可区分。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/search-suggestions.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：Autocomplete",
+        "url": "https://api.flutter.dev/flutter/material/Autocomplete-class.html"
+      },
+      {
+        "title": "Flutter API：TextEditingController",
+        "url": "https://api.flutter.dev/flutter/widgets/TextEditingController-class.html"
+      }
+    ],
+    "acceptance": [
+      "输入可产生结果的查询，先显示等待态，再显示与当前输入对应的模拟建议。",
+      "先输入旧查询再快速改成新查询，安排旧响应最后返回；最终及随后画面均只显示新查询的建议。",
+      "分别输入无匹配和模拟失败的查询，看到不同的空态与错误态；错误态重试后按当前查询更新结果。",
+      "在请求未完成时清空，输入、建议与错误立即清除且输入框保持焦点；等待所有旧任务结束后面板仍关闭。"
+    ]
+  },
+  {
+    "id": "async-button",
+    "authorship": "curated",
+    "title": "按钮加载与结果",
+    "positions": [
+      "controls",
+      "forms"
+    ],
+    "types": [
+      "progress-feedback",
+      "press-feedback",
+      "state-change",
+      "reduced-motion"
+    ],
+    "summary": "提交时保留按钮宽度，以单一任务展示加载、成功、失败与重试，避免重复提交及旧结果覆盖。",
+    "prompt": "请先检查现有 Flutter 工程的 SDK 约束、主题、按钮封装、异步提交逻辑和公共模块 A，只对当前按钮作最小修改，不升级 SDK、不引入第三方依赖。复用 A 的统一时长、曲线、取消和资源释放机制；不要在 build 中创建提交任务，也不要为展示动效重写业务层。\n\n定义空闲→提交中→成功或失败的状态：点击或键盘激活时先同步设置进行中标记，再启动一次任务；进行中忽略后续点击与激活，不能只靠按钮外观防重。保持按钮原有宽高和点击区域，在内部替换文字、加载提示与结果，避免相邻内容移动。成功显示明确结果并保持至既有业务流程退出；失败停止加载，显示失败与重试入口，重试才创建新一轮任务。\n\n任务身份独立于动画身份；若业务已有取消或页面退出行为，取消可取消的工作，否则使旧回调失效。重试或快速状态切换时取消旧补间，从当前视觉值接续，不让旧成功覆盖新加载；组件销毁后不再写入状态，并释放监听和控制器。只更新按钮及紧邻结果区，不重建整页。\n\n保留原控件的焦点、Tab 顺序与键盘语义，内部子项更换不抢焦点；若加载禁用导致原按钮不可聚焦，按既有策略妥善安置焦点，不让它停在隐藏节点；不重复处理同一次按键；结果文字可被辅助技术识别。减少动态效果时取消装饰性旋转、缩放与交叉过渡，以静态提交中文字保留进行中含义。网页预览只模拟同一提交任务的成功、失败与重试，不要求真实接口或额外取消按钮。验收重点是宽度不变、连点不重新提交、失败可重试且旧结果不回写。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/async-button.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：ElevatedButton（禁用与激活回调）",
+        "url": "https://api.flutter.dev/flutter/material/ElevatedButton-class.html"
+      },
+      {
+        "title": "Flutter API：FutureBuilder（Future 创建时机与异步快照）",
+        "url": "https://api.flutter.dev/flutter/widgets/FutureBuilder-class.html"
+      }
+    ],
+    "acceptance": [
+      "提交前、加载中、成功和失败时，按钮左右边界及相邻内容位置不改变。",
+      "加载中连续点击或重复键盘激活，不重新开始加载，也不出现重复的结果切换。",
+      "成功路径显示成功；失败路径停止加载并提供重试，重试后先回到加载态再显示本轮结果。",
+      "Tab 可到达按钮；启用浏览器减少动态效果偏好后，仍能看到提交中及最终结果，且无装饰性旋转或缩放。"
+    ]
+  },
+  {
+    "id": "favorite-toggle",
+    "authorship": "curated",
+    "title": "收藏反馈",
+    "positions": [
+      "controls",
+      "detail"
+    ],
+    "types": [
+      "press-feedback",
+      "selection-feedback",
+      "reduced-motion"
+    ],
+    "summary": "立即切换收藏值，仅在图标局部提供反馈，快速反向始终收敛到最后状态并保持可访问语义同步。",
+    "prompt": "先检查 Flutter 项目的 SDK 约束、Material 主题、收藏状态来源、图标按钮封装和公共模块 A，再最小修改收藏控件；不升级 SDK、不引入第三方依赖。若现有版本和主题支持 IconButton 的选中能力可优先复用，否则沿用项目兼容的图标与语义实现，不强制切换主题。新增动效统一使用 A 的时长、曲线、取消及资源释放约定。\n\n明确未收藏→已收藏→未收藏：点击后立即更新唯一的布尔状态，轮廓与填充、颜色或短促的小幅缩放只用于确认本次变化，不等待动效完成才生效。仅改变图标内部视觉，不改变按钮尺寸、命中区或周围布局，不添加粒子、全屏提示、收藏计数或网络流程。反馈结束退出瞬态并停在当前收藏值对应的静态图标。\n\n动画未结束时允许再次点击，最后一次输入决定目标；取消旧方向的补间，从当前值转向新目标，不能排队播放每次点击，也不能在结束回调中反转业务值。快速来回切换后不得残留放大或半透明状态；仅重建收藏控件，离开页面或销毁时通过 A 停止动画并释放自建资源。\n\n保留原按钮的 Tab 导航与键盘激活，焦点不因图标更换丢失；可访问名称保持稳定，已收藏或未收藏状态随布尔值立即更新，复用已有选中或切换语义，避免内外层重复，也不在同一语义节点并设 checked 与 toggled。网页用等效可访问按钮表达同一状态，可从浏览器无障碍树检查，不据此声称真实读屏已验证。减少动态效果时取消缩放和弹跳，直接切换图标与状态。网页仅演示即时切换、局部反馈、快速反向与读屏状态；验收图标及语义一致、布局不动。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/favorite-toggle.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：IconButton（选中状态、图标与命中区域）",
+        "url": "https://api.flutter.dev/flutter/material/IconButton-class.html"
+      },
+      {
+        "title": "Flutter API：SemanticsProperties.toggled（可切换状态语义）",
+        "url": "https://api.flutter.dev/flutter/semantics/SemanticsProperties/toggled.html"
+      }
+    ],
+    "acceptance": [
+      "单次点击立即改变收藏图标与状态；按钮边界和邻近内容不移动。",
+      "反馈未结束即反向点击，最终图标对应最后一次操作，停止后没有残余放大或透明度变化。",
+      "Tab 聚焦后可用键盘激活；图标替换后焦点仍在同一按钮。",
+      "浏览器无障碍树中只有一个可激活的收藏控件，名称稳定，可切换状态与当前图标一致。",
+      "启用浏览器减少动态效果偏好后，无缩放或弹跳，收藏状态仍立即切换。"
+    ]
+  },
+  {
+    "id": "switch-toggle",
+    "authorship": "curated",
+    "title": "开关切换",
+    "positions": [
+      "controls"
+    ],
+    "types": [
+      "selection-feedback",
+      "press-feedback",
+      "reduced-motion"
+    ],
+    "summary": "用同一状态驱动拇指与轨道，保留原生键盘能力，快速反向不排队、不跳回起点。",
+    "prompt": "请先检查现有 Flutter 工程的 SDK 约束、主题、Switch 封装、开关值来源、键盘绑定和公共模块 A，再做最小修改；不升级 SDK、不引入第三方依赖，不为一个开关重做全局主题。优先保留原生 Switch 及其语义，新增或确需自定义的过渡才接入 A 的统一时长、曲线、取消和资源释放机制，避免在原生动画外叠加第二套不同步动画。\n\n明确关闭→开启→关闭：点击或聚焦后按空格立即更新同一布尔值，再由该值驱动拇指位置和轨道底色；两者在同一过渡中更新并归于同一目标，不允许先滑完拇指再换颜色。开关外框、命中区和旁边标签保持不变，到达目标后退出过渡态，停在对应端点；不能在动画完成回调里再次提交状态。\n\n过渡中再次操作立即改变目标，取消旧补间并从当前视觉位置反向，不先跳回端点，不排队执行过时操作；自定义实现可用同一归一化进度关联位置与底色。每次有效激活只切换一次，组件外部更新也走同一状态入口，只更新当前开关局部。页面退出或控件销毁时停止新增动画，释放自建控制器、监听和焦点资源。\n\n保留 Tab 导航、可见焦点和可访问开关状态；先检查原生空格处理，只有缺失时才补局部快捷键，不能同时响应按下与抬起造成切换两次，聚焦按空格不滚动页面。减少动态效果时直接显示新端点与颜色，不保留滑行、拖尾或弹簧回摆。网页预览仅展示拇指与底色同步、空格切换及快速反向，不强制新增拖拽或持久化设置；验收检查最终端点、颜色、状态与最后输入一致。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/switch-toggle.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：Switch（外部 value 与 onChanged）",
+        "url": "https://api.flutter.dev/flutter/material/Switch-class.html"
+      },
+      {
+        "title": "Flutter API：FocusableActionDetector（焦点、动作与局部快捷键）",
+        "url": "https://api.flutter.dev/flutter/widgets/FocusableActionDetector-class.html"
+      }
+    ],
+    "acceptance": [
+      "切换过程中拇指与轨道底色都在本次过渡中更新，不出现拇指到端点后才开始变色；落定后共同对应开启或关闭。",
+      "Tab 到达开关时可见焦点；按一次空格仅切换一次，页面不随空格滚动。",
+      "滑动途中快速反向，拇指不先跳回起点，最终端点和底色与最后输入一致。",
+      "连续切换不改变开关边界或标签位置；减少动态效果时直接切换到目标端点与颜色。"
+    ]
+  },
+  {
+    "id": "form-validation",
+    "authorship": "curated",
+    "title": "表单校验",
+    "positions": [
+      "forms"
+    ],
+    "types": [
+      "form-feedback",
+      "height-change",
+      "reduced-motion"
+    ],
+    "summary": "错误信息在字段局部展开，内容正确后收起；保留输入与焦点，不以持续抖动提醒错误。",
+    "prompt": "检查 Flutter 项目的 SDK 约束、Form 与字段封装、校验时机、错误文案、输入控制器和公共模块 A，保留校验规则并最小修改，不升级、不引入第三方依赖。优先复用现有 TextFormField 错误呈现，确需自定义时只在错误区使用项目兼容的尺寸过渡，例如 AnimatedSize，不叠加两份错误文字；新增动效依赖 A 的统一时长、曲线、取消及资源释放机制。\n\n定义未校验或有效→校验失败→修正有效：按现有提交或失焦策略首次校验，错误消息在对应字段下方局部展开；该字段进入已校验状态后，修正输入应重新检查，正确则收起错误。失败返回具体错误，合法返回无错误，不把颜色变化当作唯一提示。只让错误区高度及必要的后续排版改变，不抖动字段、整张表单或页面，也不循环播放提醒。\n\n重复检查相同错误不反复重播；展开未完就修正时取消旧目标并转向收起，收起中出现新错误则转回展开，以最新输入对应的结果为准。错误内容换行应完整展示，不用固定单行高度裁掉文本。尽量把动效状态限制在字段和错误区，避免逐帧重建整个表单；保留输入值与选择位置，退出页面时停止过渡并释放自建资源。\n\n不在 build 中新建表单键或焦点对象，不因显隐错误替换输入框身份；Tab、提交键和现有焦点策略继续有效，不强制抢焦点或关闭键盘。错误与对应字段保持可访问关联。减少动态效果时直接显示或移除消息，输入与校验照常工作。网页仅展示错误局部展开、正确后收起和无持续抖动，不要求新增注册、网络提交或成功弹窗；验收检查消息、占位及输入焦点的变化。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/form-validation.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter 官方教程：Build a form with validation",
+        "url": "https://docs.flutter.dev/cookbook/forms/validation"
+      },
+      {
+        "title": "Flutter API：AnimatedSize（子项尺寸变化过渡）",
+        "url": "https://api.flutter.dev/flutter/widgets/AnimatedSize-class.html"
+      }
+    ],
+    "acceptance": [
+      "触发现有校验条件后，具体错误只在对应字段下方出现，不出现整页或输入框持续抖动。",
+      "修正为合法内容后，错误文字消失且其额外占位收回；再次输入非法内容可重新出现。",
+      "快速交替输入合法与非法内容，最终消息与最后输入一致，不残留旧错误或截断的多行文字。",
+      "错误显隐前后输入值、光标位置和当前焦点保留，Tab 仍可按原顺序移动。",
+      "启用浏览器减少动态效果偏好后，错误直接出现或移除，校验结果不改变。"
+    ]
+  },
+  {
+    "id": "progress-status",
+    "authorship": "curated",
+    "title": "进度与完成",
+    "positions": [
+      "notifications",
+      "controls"
+    ],
+    "types": [
+      "progress-feedback",
+      "state-change",
+      "reduced-motion"
+    ],
+    "summary": "以明确的数据模拟驱动开始、增加与重置；同一轮进度不倒退，到达上限才切换完成态。",
+    "prompt": "先检查 Flutter 项目的 SDK、进度组件、数据源、状态管理及公共模块 A，兼容范围内最小修改，不升级、不引入第三方依赖。沿用兼容的 LinearProgressIndicator，新增数值或完成态过渡复用 A 的统一时长、曲线、取消和资源释放能力。\n\n定义待开始→进行中→已完成：开始建立新一轮模拟任务并从零开始，增加操作推进明确的模拟完成量，以完成量除以总量得到零到一的确定进度；只有模拟目标与显示进度均达到一后才切换完成图标与文字，不在进度条尚未追上时提前覆盖为完成态。预览明确标为模拟，不把按时长循环的动画伪装成真实任务进度，也不在没有数据时凭空跑满。运行中重复开始不创建并行任务，完成后增加不越界。\n\n同一轮的目标值和显示值均不倒退，进度条与百分比来自同一显示值；连续增加时取消旧补间，从当前值追向最新目标，不排队播放旧目标。重置是明确的退出与归零操作：先使旧任务、回调和完成过渡失效，再显示待开始与零进度；重置后立即开始只接受新一轮结果。完成态出现后不再偷偷累加，也不添加倒退播放、暂停或取消按钮。\n\n只更新进度区及其状态文字，不重建整页；控件销毁时通过 A 停止动画，并释放自建控制器、监听及模拟计时资源。开始、增加、重置沿用可聚焦按钮，键盘与点击走同一逻辑，进度变更不抢焦点；语义提供进度和完成状态，避免每帧重复播报。减少动态效果时直接更新数值和完成态，保留所有状态信息。网页预览仅覆盖开始、增加、重置及完成切换，不要求接入真实后台；验收同轮不回退、重置无旧结果、满值才完成。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/progress-status.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：LinearProgressIndicator（确定进度与单调增加）",
+        "url": "https://api.flutter.dev/flutter/material/LinearProgressIndicator-class.html"
+      },
+      {
+        "title": "Flutter API：AnimationController（停止、取消与生命周期）",
+        "url": "https://api.flutter.dev/flutter/animation/AnimationController-class.html"
+      }
+    ],
+    "acceptance": [
+      "开始后从零进入进行中；每次增加均推进模拟值，进度条和百分比一致，同一轮不倒退。",
+      "运行中重复开始不会归零或出现并行推进；快速连续增加不回播旧进度、不超过满值。",
+      "进度条与百分比未到满值时不显示完成；两者到满值后才切换完成文字或图标，继续增加不越界也不重播完成态。",
+      "进行中或完成态点击重置，立即回到待开始及零进度；随后开始不会被旧回调改成旧进度或完成态。",
+      "Tab 可到达开始、增加、重置，键盘可操作且更新不抢焦点；减少动态效果时进度与完成态直接更新。"
+    ]
+  },
+  {
+    "id": "shared-element",
+    "authorship": "curated",
+    "title": "共享元素",
+    "positions": [
+      "detail",
+      "media"
+    ],
+    "types": [
+      "shared-element",
+      "page-transition",
+      "reduced-motion"
+    ],
+    "summary": "让缩略图在进入详情和返回时匹配位置与尺寸，并在进场未结束时安全返回。",
+    "prompt": "请先检查现有Flutter项目的SDK约束、导航结构、缩略图与详情布局，以及公共模块A的实际接口，确认兼容后仅最小修改本交互，不升级SDK、不引入第三方依赖。实现缩略图进入详情再返回的共享元素过渡：激活缩略图后，从列表态进入转场态，再落定为详情态；返回时回到原缩略图位置与尺寸。优先复用现有Navigator与Hero，两端使用稳定且匹配的tag，同一路由内不重复，目标元素在详情首帧即参与布局；保持两端轴对齐，核对坐标、裁切、图片适配及主题差异，飞行期间保留占位，避免列表塌陷或出现两份图像。时长与曲线遵循A和现有路由配置，不另起竞争动画。进场未结束就返回时，交由现有导航转场重定向，不先跳到终点；导航门闩在路由转场及覆盖层清理完成前保持，连续激活不叠加详情页，不把 pop 返回的结果当作飞行层已清除；旧异步回调不得覆盖最新导航状态。只更新转场相关子树，保留列表滚动位置，不逐帧重建整页。缩略图及返回控件沿用项目键盘激活约定；进入后焦点留在当前详情范围，返回后恢复到仍存在的来源控件，不主动弹出软键盘。读取当前项目可用的减少动态效果偏好，必要时取消飞行位移并直接完成同一导航结果。退出、取消或卸载时遵循A清理自建监听与资源，不干预框架持有的控制器。网页仅展示进详情、位置尺寸匹配和快速返回；按下列验收项交付。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/shared-element.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter官方指南：Hero animations",
+        "url": "https://docs.flutter.dev/ui/animations/hero-animations"
+      },
+      {
+        "title": "Flutter API：Hero（匹配tag、首帧布局与飞行重定向）",
+        "url": "https://api.flutter.dev/flutter/widgets/Hero-class.html"
+      }
+    ],
+    "acceptance": [
+      "点击缩略图后进入对应详情，图像从原缩略图边界过渡到详情边界，落定后无重复图像或残留占位。",
+      "从详情返回后，图像恢复到原缩略图的位置和尺寸，列表仍处于进入前的滚动位置。",
+      "进场尚未结束立即返回，最终只显示原列表，不出现滞留详情、悬空图像或遮挡点击的转场层。",
+      "快速连续点击同一缩略图后执行一次返回即可回到列表，不需要逐层关闭重复详情。"
+    ]
+  },
+  {
+    "id": "collapsing-header",
+    "authorship": "curated",
+    "title": "滚动收缩标题栏",
+    "positions": [
+      "scroll-area",
+      "detail"
+    ],
+    "types": [
+      "scroll-linked",
+      "height-change",
+      "reduced-motion"
+    ],
+    "summary": "标题栏直接跟随滚动收缩，回顶恢复，避免滚动事件重复启动独立动画。",
+    "prompt": "请先检查现有Flutter项目的SDK约束、滚动容器、标题栏布局和公共模块A接口，确认兼容后最小修改，不升级SDK、不引入第三方依赖。实现滚动驱动的标题栏收缩：顶部为展开态，向下滚动时进入连续收缩态，到最小高度后保持收缩态；在收缩区间内反向滚动按偏移回展，到顶恢复展开态；滚到区间之外时不能声称反向一点就立即展开。已有CustomScrollView时优先复用SliverAppBar与FlexibleSpaceBar，保留最小栏高时选择 pinned、不启用 floating/snap，并显式去掉默认视差；不强制重构整页；自定义方案以实际滚动位置计算并夹紧进度，处理安全区和视口尺寸，不用滚动通知直接驱动布局。标题字号、位置与栏高来自同一进度，标题只保留一份有效语义，不让两套文字同时叠显。收缩本身跟随滚动，不套用固定时长追赶；额外过渡才使用A的统一时长与曲线。不在每次滚动回调里重复forward，不叠加自动吸附、下拉拉伸或视差效果。停止滚动即停在当前状态，快速反向从当前进度回退，取消旧的补间及过期回调。局部更新标题相关区域，不逐帧重建内容列表；复用现有滚动控制器，卸载时按A移除自建监听并释放自建资源。滚动和标题尺寸变化不得抢焦点，保留现有控件键盘操作与输入焦点，不主动开关软键盘。减少动态效果时保留必要的滚动几何收缩，去掉装饰性缩放与延迟补间。网页仅展示滚动收缩、回顶恢复和无重复触发，不增设其他功能；按下列验收项交付。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/collapsing-header.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：SliverAppBar（随滚动改变高度及配置边界）",
+        "url": "https://api.flutter.dev/flutter/material/SliverAppBar-class.html"
+      },
+      {
+        "title": "Flutter API：FlexibleSpaceBar（展开、收缩及标题缩放）",
+        "url": "https://api.flutter.dev/flutter/material/FlexibleSpaceBar-class.html"
+      }
+    ],
+    "acceptance": [
+      "从顶部向下滚动时，标题栏高度随滚动减小；达到最小高度后继续滚动，不再进一步缩小或溢出。",
+      "在收缩中途停止滚动，标题栏保持当前状态，不自行补播一段收缩动画。",
+      "中途反向滚动，标题栏从当前尺寸回展；返回顶部后恢复最初高度和标题位置。",
+      "反复上下滚动同一区间，标题不重影、不跳回动画起点，停止后没有积压的动画继续播放。"
+    ]
+  },
+  {
+    "id": "back-to-top",
+    "authorship": "curated",
+    "title": "返回顶部",
+    "positions": [
+      "scroll-area",
+      "list-page"
+    ],
+    "types": [
+      "scroll-linked",
+      "press-feedback",
+      "reduced-motion"
+    ],
+    "summary": "超过滚动阈值才显示按钮，返回顶部过程允许用户滚动接管。",
+    "prompt": "请先检查现有Flutter项目的SDK约束、目标滚动容器、控制器归属及公共模块A接口，确认兼容后最小修改，不升级SDK、不增加第三方依赖。实现返回顶部按钮：目标列表离视觉起点的滚动距离未超过约定阈值时隐藏，超过后显示；激活按钮进入回顶态，抵达真实起始位置后退出，按钮按阈值状态隐藏。阈值沿用项目配置，没有则集中定义；以离顶距离判断，仅在跨越阈值时更新显隐，隐藏控件不得响应点击或保留键盘焦点。通过目标ScrollController读取偏移并过滤其他滚动区域，只局部更新按钮，不逐帧重建列表。回顶前检查控制器已连接、滚动范围有效；结合 reverse、AxisDirection 与布局约定确认视觉起始端，选择对应有效边界，不把任何 minScrollExtent 都当顶部。时长与曲线由A提供，连续点击不得排队启动多个任务。用户在途中拖动、滚轮或键盘滚动时，应立即取消程序回顶并交还控制权，不在松手后自动续跑；新的回顶请求从当前偏移开始。注意animateTo的Future被中断也会完成，必须复核偏移与任务身份，不能将回调完成等同到顶，过期任务不得改写显隐。按钮沿用现有键盘激活方式；因到顶而隐藏时，仅当焦点仍在按钮上才移交到既有列表焦点目标，不抢走用户新焦点、不唤起软键盘。减少动态效果时直接跳到同一目标，不向animateTo传零时长。离页或卸载按A取消任务、移除监听并释放自有资源。网页仅展示阈值显隐、回顶及用户滚动打断；按下列验收项交付。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/back-to-top.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：ScrollController.animateTo（中断语义与零时长限制）",
+        "url": "https://api.flutter.dev/flutter/widgets/ScrollController/animateTo.html"
+      },
+      {
+        "title": "Flutter API：ScrollNotification（滚动来源、生命周期与布局限制）",
+        "url": "https://api.flutter.dev/flutter/widgets/ScrollNotification-class.html"
+      }
+    ],
+    "acceptance": [
+      "顶部及未超过阈值时按钮不可见且不可点击；超过阈值后可见，向上滚回阈值以内后再次隐藏。",
+      "点击按钮且不再操作，列表到达起始位置，首项回到初始位置，按钮隐藏。",
+      "回顶途中用滚轮或拖动反向滚动，列表响应用户输入；松手后不再被旧任务拉回顶部。",
+      "连续点击回顶按钮不产生多段排队滚动；中断后重新点击，能从当前所在位置回顶。"
+    ]
+  },
+  {
+    "id": "image-gallery",
+    "authorship": "curated",
+    "title": "图片切换",
+    "positions": [
+      "media",
+      "detail"
+    ],
+    "types": [
+      "page-transition",
+      "selection-feedback",
+      "reduced-motion"
+    ],
+    "summary": "通过上一张、下一张切换图片，同步页码和边界按钮，支持中途快速反向。",
+    "prompt": "请先检查现有Flutter项目的SDK约束、图片数据、切换组件和公共模块A接口，确认兼容后最小修改，不升级SDK、不引入第三方依赖。实现仅含上一张、下一张与页码的图片切换：静止态激活可用按钮后进入切换态，目标图片居中后回到静止态；首张禁用上一张，末张禁用下一张，不循环。优先复用既有组件，可用PageView与PageController，但不强制增加手势翻页、自动播放、缩放或下载。分别维护当前居中页和待达目标索引，指令按待达目标递增递减并限制在有效范围，页码以 onPageChanged 报告的当前居中页同步，切换途中不先冒充目标已到达，按钮禁用则按待达目标计算，确保末端未到达时仍可立即反向；控制器完成回调只复核当前任务，不盲写旧目标。切换时长和曲线由A提供；下一张尚未结束就点上一张，应取消旧目标，从当前视觉位置转向新目标，不先跳完、不排队；快速同向点击也按明确目标合并处理。页面退出或数据变化时使旧任务失效，索引重新夹紧；无图和单图保持静止且禁用无效按钮。图片使用稳定标识与既有适配方式，尺寸占位固定，仅更新图片视窗、页码和按钮状态，不重建整页。按钮保留现有键盘激活与可见焦点，禁用后按既有焦点策略处理，不将焦点移入隐藏图片，不唤起软键盘。读取当前项目可用的减少动态效果偏好，直接切到目标页并同步页码，不调用零时长animateToPage。卸载时遵循A取消回调、移除监听，释放自有控制器。网页仅展示按钮切图、页码、边界禁用和快速反向；按下列验收项交付。",
+    "dependsOn": [
+      "module-a-rules"
+    ],
+    "demo": "demos/image-gallery.html",
+    "updatedAt": "2026-11-09",
+    "references": [
+      {
+        "title": "Flutter API：PageView（分页、控制器与onPageChanged）",
+        "url": "https://api.flutter.dev/flutter/widgets/PageView-class.html"
+      },
+      {
+        "title": "Flutter API：PageController.animateToPage（从当前页向目标页过渡）",
+        "url": "https://api.flutter.dev/flutter/widgets/PageController/animateToPage.html"
+      }
+    ],
+    "acceptance": [
+      "点击下一张或上一张后，落定图片与页码一致，页码始终处于1到图片总数之间。",
+      "首张的上一张不可点击，末张的下一张不可点击；到边界后继续尝试不会循环或产生空白页。",
+      "从中间页点下一张并立即点上一张，最终回到原页，旧动画结束后不再跳回下一张。",
+      "快速连续交替点击两个方向，最终图片和页码对应最后有效目标，停止点击后没有排队切换继续播放。"
+    ]
   }
 ];

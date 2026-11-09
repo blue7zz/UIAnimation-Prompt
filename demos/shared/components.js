@@ -240,5 +240,154 @@
     const trigger = node('<button class="round-button" aria-label="打开抽屉">☰</button>');
     api.listen(trigger, 'click', controller.toggle); root.querySelector('.demo-header').append(trigger);
   }
-  window.MotionParts = { node, button, feedback, shell, actions, note, menu, list, ad, drawer, addDrawerButton, row, titles };
+  function to(element, target, timing = '--motion-normal') {
+    const computed = getComputedStyle(element);
+    const from = Object.fromEntries(Object.keys(target).map(key => [key, computed[key]]));
+    Object.assign(element.style, from); api.stop(element);
+    return api.animate(element, [from, target], timing);
+  }
+  function dragAxis(element, axis, update) {
+    let drag = null; let suppressClick = false;
+    const coordinate = event => axis === 'x' ? event.clientX : event.clientY;
+    const cross = event => axis === 'x' ? event.clientY : event.clientX;
+    api.listen(element, 'pointerdown', event => {
+      if (!event.isPrimary || event.button !== 0) return;
+      suppressClick = false;
+      drag = { id: event.pointerId, start: coordinate(event), cross: cross(event), active: false, captor: element.parentElement };
+    });
+    api.listen(document, 'pointermove', event => {
+      if (drag?.id !== event.pointerId) return;
+      const delta = coordinate(event) - drag.start;
+      if (!drag.active) {
+        if (Math.abs(delta) < 5 || Math.abs(delta) <= Math.abs(cross(event) - drag.cross)) return;
+        drag.active = true; drag.captor.setPointerCapture(event.pointerId); update(0, 'start');
+      }
+      event.preventDefault(); update(delta, 'move');
+    });
+    function finish(event, cancelled) {
+      if (drag?.id !== event.pointerId) return;
+      const previous = drag; drag = null;
+      if (previous.captor.hasPointerCapture(previous.id)) previous.captor.releasePointerCapture(previous.id);
+      if (!previous.active) return;
+      suppressClick = true; update(coordinate(event) - previous.start, cancelled ? 'cancel' : 'end');
+    }
+    api.listen(document, 'pointerup', event => finish(event, false));
+    api.listen(document, 'pointercancel', event => finish(event, true));
+    api.listen(document, 'lostpointercapture', event => finish(event, true));
+    api.listen(element, 'click', event => {
+      if (suppressClick && event.detail !== 0) { suppressClick = false; event.preventDefault(); event.stopImmediatePropagation(); }
+    }, { capture: true });
+  }
+  function popup(title, description, sheet = false) {
+    const layer = node('<div class="example-layer" hidden><button class="example-shade" aria-label="关闭浮层" tabindex="-1"></button><section class="example-dialog' + (sheet ? ' example-sheet' : '') + '" role="dialog" aria-modal="true" tabindex="-1"><span class="sheet-handle" aria-hidden="true"></span><h2></h2><p></p><div class="dialog-actions"></div></section></div>');
+    const panel = layer.querySelector('section'); const shade = layer.querySelector('button');
+    panel.querySelector('h2').textContent = title; panel.querySelector('p').textContent = description;
+    panel.setAttribute('aria-label', title); root.append(layer);
+    const app = root.querySelector('.demo-app'); let open = false; let closing = false; let revision = 0; let previousFocus;
+    async function setOpen(next, settle = false) {
+      if (closing || (next === open && !settle)) return false;
+      const current = ++revision;
+      if (next && !open) previousFocus = document.activeElement;
+      open = next; layer.hidden = false; layer.classList.toggle('closing', !next);
+      closing = !next; app.inert = true; panel.inert = false;
+      if ((next && !settle) || !panel.contains(document.activeElement)) (panel.querySelector('button:not(:disabled)') || panel).focus();
+      const done = await Promise.all([to(shade, { opacity: next ? 1 : 0 }), to(panel, { opacity: next ? 1 : 0, transform: next ? 'none' : sheet ? 'translateY(100%)' : 'scale(' + api.token('--motion-scale') + ')' })]);
+      if (current !== revision || done.some(result => !result)) return false;
+      if (!next) {
+        layer.hidden = true; panel.inert = true; closing = false; app.inert = false;
+        if (previousFocus?.isConnected) previousFocus.focus();
+        else (app.querySelector('button:not(:disabled)') || app).focus();
+      }
+      return true;
+    }
+    api.listen(shade, 'click', () => setOpen(false));
+    api.listen(layer, 'pointerdown', event => { if (closing) event.preventDefault(); });
+    api.listen(document, 'keydown', event => {
+      if (!open && !closing) return;
+      if (event.key === 'Escape') { event.preventDefault(); setOpen(false); }
+      if (event.key === 'Tab') {
+        const items = [...panel.querySelectorAll('button, input')].filter(item => !item.disabled && item.getClientRects().length);
+        event.preventDefault();
+        const index = items.indexOf(document.activeElement);
+        (items.length ? items[index < 0 ? (event.shiftKey ? items.length - 1 : 0) : (index + (event.shiftKey ? -1 : 1) + items.length) % items.length] : panel).focus();
+      }
+    }, { capture: true });
+    api.listen(document, 'focusin', event => {
+      if ((open || closing) && !panel.contains(event.target)) (panel.querySelector('button:not(:disabled)') || panel).focus();
+    });
+    if (sheet) {
+      let origin = 0;
+      dragAxis(panel, 'y', (delta, phase) => {
+        if (!open || closing) return;
+        if (phase === 'start') { origin = new DOMMatrixReadOnly(getComputedStyle(panel).transform).m42; ++revision; api.stop(panel); api.stop(shade); }
+        if (phase === 'move') { const offset = Math.max(0, origin + delta); panel.style.transform = 'translateY(' + offset + 'px)'; shade.style.opacity = String(Math.max(0, 1 - offset / panel.offsetHeight)); }
+        if (phase === 'end' || phase === 'cancel') setOpen(phase === 'cancel' || origin + delta < 60, true);
+      });
+    }
+    return { panel, open: () => setOpen(true), close: () => setOpen(false) };
+  }
+  function choices(parent, mode) {
+    const labels = mode === 'bottom' ? ['首页', '收藏', '我的'] : mode === 'segment' ? ['日', '周', '月'] : ['灵感', '旅行', '生活'];
+    const bar = node('<div class="choice-bar" role="tablist"><i class="choice-marker' + (mode === 'indicator' ? ' underline-marker' : '') + '" aria-hidden="true"></i></div>');
+    bar.setAttribute('aria-label', '内容分区');
+    const marker = bar.firstElementChild; const panels = node('<div class="choice-panels"></div>');
+    parent.append(bar); if (mode !== 'indicator') parent.append(panels);
+    let selected = 0; let revision = 0;
+    const buttons = []; const regions = [];
+    function place(animate = true) {
+      const target = buttons[selected];
+      const values = { left: target.offsetLeft + 'px', width: target.offsetWidth + 'px' };
+      if (animate) to(marker, values); else Object.assign(marker.style, values);
+    }
+    function select(index) {
+      if (index === selected) return;
+      const previous = selected; selected = index; const current = ++revision;
+      buttons.forEach((item, i) => { item.setAttribute('aria-selected', String(i === selected)); item.tabIndex = i === selected ? 0 : -1; });
+      const opacity = regions.map(region => region.hidden ? '0' : getComputedStyle(region).opacity);
+      regions.forEach((region, i) => {
+        region.style.opacity = opacity[i]; api.stop(region);
+        region.hidden = i !== selected && !(mode === 'tabs' && i === previous);
+        region.inert = i !== selected; region.setAttribute('aria-hidden', String(i !== selected));
+      });
+      if (regions.length) {
+        if (mode === 'tabs') {
+          to(regions[previous], { opacity: 0 }, '--motion-fast').then(done => {
+            if (done && current === revision && selected !== previous) regions[previous].hidden = true;
+          });
+          to(regions[selected], { opacity: 1 }, '--motion-fast');
+        } else if (mode === 'segment') regions[selected].style.opacity = '1';
+        else { regions[selected].style.opacity = '0'; to(regions[selected], { opacity: 1 }, '--motion-fast'); }
+      }
+      place();
+    }
+    labels.forEach((label, index) => {
+      const trigger = button(label, () => select(index)); trigger.setAttribute('role', 'tab'); trigger.id = 'choice-' + index;
+      bar.append(trigger); buttons.push(trigger);
+      if (mode !== 'indicator') {
+        trigger.setAttribute('aria-controls', 'choice-panel-' + index);
+        const panel = node('<section class="example-card example-panel" role="tabpanel"><h2></h2><p></p></section>');
+        panel.id = 'choice-panel-' + index; panel.setAttribute('aria-labelledby', trigger.id); panel.querySelector('h2').textContent = label;
+        if (mode === 'segment') panel.querySelector('p').textContent = '当前范围：' + label;
+        else {
+          panel.querySelector('p').textContent = '这个分区的计数会保留，不因切换重置。';
+          const countText = node('<strong>0</strong>'); let count = 0;
+          panel.append(countText, button('计数 +1', () => { countText.textContent = String(++count); }));
+        }
+        panels.append(panel); regions.push(panel);
+      }
+      api.listen(trigger, 'keydown', event => {
+        let next;
+        if (event.key === 'ArrowRight') next = (selected + 1) % labels.length;
+        if (event.key === 'ArrowLeft') next = (selected + labels.length - 1) % labels.length;
+        if (event.key === 'Home') next = 0;
+        if (event.key === 'End') next = labels.length - 1;
+        if (next !== undefined) { event.preventDefault(); select(next); buttons[next].focus(); }
+      });
+    });
+    if (mode === 'bottom') { parent.append(bar); bar.style.position = 'sticky'; bar.style.bottom = '0'; }
+    buttons.forEach((item, i) => { item.setAttribute('aria-selected', String(i === 0)); item.tabIndex = i === 0 ? 0 : -1; });
+    regions.forEach((region, i) => { region.hidden = i !== 0; region.inert = i !== 0; region.setAttribute('aria-hidden', String(i !== 0)); });
+    place(false); api.listen(window, 'resize', () => place(false));
+  }
+  window.MotionParts = { node, button, feedback, shell, actions, note, menu, list, ad, drawer, addDrawerButton, row, titles, to, dragAxis, popup, choices };
 }());
