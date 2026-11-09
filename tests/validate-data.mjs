@@ -51,7 +51,7 @@ assert.equal(lib.filter(effects, catalog, { q: '', positions: [], types: [] }).l
 assert.equal(lib.filter(effects, catalog, { q: 'definitely-no-such-effect', positions: [], types: [] }).length, 0);
 assert.equal(lib.filter(effects, catalog, { q: '', positions: ['overlay'], types: [] }).length, 0);
 assert.equal(lib.filter(effects, catalog, { q: '  FLUTTER  ', positions: [], types: [] }).length, effects.filter(effect => effect.prompt.toLowerCase().includes('flutter')).length);
-assert.equal(lib.filter(effects, catalog, { q: '减少动态效果', positions: [], types: [] }).length, 8);
+assert.deepEqual([...lib.filter(effects, catalog, { q: '减少动态效果', positions: [], types: [] })].map(effect => effect.id), effects.filter(effect => effect.prompt.includes('减少动态效果') || effect.types.includes('reduced-motion')).map(effect => effect.id));
 const bundleOrder = [...lib.resolveDependencies('complete-list', effects)].map(effect => effect.id);
 assert.deepEqual(bundleOrder, ['module-a-rules', 'module-b-menu', 'module-d-list', 'complete-list']);
 assert.throws(() => lib.resolveDependencies('missing', effects), /找不到依赖/);
