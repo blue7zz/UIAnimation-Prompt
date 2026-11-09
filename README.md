@@ -35,7 +35,7 @@ python3 -m http.server 4173 --bind 0.0.0.0
 
 ## 新增一个效果：两步
 
-1. 在 `demos/` 新增独立 HTML。可复制最接近的现有预览，修改文件内的 `api.mount(function () { ... })` 场景；共享部件无需改动。完全自定义时只保留公共 CSS、`runtime.js` 和一个 `#demo` 容器，并调用 `MotionDemo.mount`。
+1. 在 `demos/` 新增独立 HTML。复制最接近的现有预览，修改文件内的 `api.mount(function () { ... })` 场景；保留底部兼容加载器，共享部件无需改动。
 2. 在 `data/effects.js` 数组末尾增加一条记录：
 
 ```js
@@ -56,39 +56,30 @@ python3 -m http.server 4173 --bind 0.0.0.0
 
 无需注册路由或修改首页 HTML。新增条目自动进入卡片、搜索和筛选；卡片装饰图形自动分配。
 
-### 自定义预览最小模板
+### 自定义预览模板
 
-```html
-<!doctype html>
-<html lang="zh-CN">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="../styles/motion-tokens.css">
-<link rel="stylesheet" href="shared/demo.css">
-<script defer src="shared/runtime.js"></script>
-<main id="demo"></main>
-<script>
-window.addEventListener('DOMContentLoaded', () => {
-  MotionDemo.mount(api => {
-    const demo = document.querySelector('#demo');
-    demo.innerHTML = '<button>点击预览</button>';
-    const button = demo.querySelector('button');
-    api.listen(button, 'click', () => {
-      api.stop(button);
-      api.animate(button, [
-        { opacity: 0.3, transform: 'translateY(' + api.distance + ')' },
-        { opacity: 1, transform: 'translateY(0px)' }
-      ], '--motion-fast');
-    });
+复制 `demos/general-rules.html`，保留底部的资源兼容加载器与 `#demo` 容器，只替换 `mountScene` 函数内的 `api.mount(...)` 内容，例如：
+
+```js
+api.mount(api => {
+  const demo = document.querySelector('#demo');
+  demo.innerHTML = '<button>点击预览</button>';
+  const button = demo.querySelector('button');
+  api.listen(button, 'click', () => {
+    api.stop(button);
+    api.animate(button, [
+      { opacity: 0.3, transform: 'translateY(' + api.distance + ')' },
+      { opacity: 1, transform: 'translateY(0px)' }
+    ], '--motion-fast');
   });
 });
-</script>
-</html>
 ```
 
 使用 `api.listen`、`api.later`、`api.animate` 管理监听、定时任务与动画，重播时自动清理；用 `api.loadTime` 模拟加载。异步连续步骤必须检查动画返回值，`false` 表示已取消。`api.resize` 处理高度过渡及视口上方高度变化的滚动补偿。时长、曲线、位移必须复用 `motion-tokens.css`，不要散落硬编码参数。
 
-预览通过 iframe 的 `sandbox="allow-scripts"` 隔离，只接受当前父窗口的固定结构消息。由于隔离帧和本地文件可能使用不透明来源，消息不按 origin 白名单验证，而按 `event.source` 和消息字段校验；请勿加入任意脚本执行或任意 URL 加载接口。
+预览通过 iframe 的 `sandbox="allow-scripts"` 隔离。由于隔离帧和本地文件可能使用不透明来源，消息不按 origin 白名单验证，而按 `event.source` 和消息字段校验；请勿加入任意外部 URL 或第三方脚本加载接口。
+
+Chrome 会阻止隔离的 `file://` iframe 加载本地外部资源，因此双击模式由预览内联加载器向当前父窗口请求仓库自带的共享资源缓存，再在隔离帧内初始化；不放宽 sandbox 权限。HTTP 模式直接加载原始共享文件。新增预览复制现有文件即可，**不需要生成缓存**；仅在修改共享 CSS、动效参数、runtime 或 components 后运行 `node scripts/build-preview-assets.mjs` 同步 `data/preview-assets.js`，校验脚本会检查缓存是否过期。
 
 ## 新增位置或类型：一处配置
 
@@ -117,10 +108,12 @@ README.md                        本文
 assets/favicon.svg               本地站点图标
 data/taxonomy.js                 位置、类型配置
 data/effects.js                  所有效果记录与原文
+data/preview-assets.js           双击模式的共享资源缓存（自动生成）
 sources/flutter-prompts.md       提供的 Markdown 原件
 styles/app.css                   资料库界面、主题、响应式
 styles/motion-tokens.css         所有预览共用动效参数
 scripts/library.js               纯检索与依赖拼接逻辑
+scripts/build-preview-assets.mjs 修改共享资源后更新双击兼容缓存
 scripts/app.js                   视图、路由、筛选、复制与预览控制
 demos/shared/demo.css            预览中的手机界面与基础部件样式
 demos/shared/runtime.js          统一控制、任务清理与消息校验

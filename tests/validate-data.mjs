@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = file => readFile(path.join(root, file), 'utf8');
 const context = vm.createContext({ window: {} });
-for (const file of ['data/taxonomy.js', 'data/effects.js', 'scripts/library.js']) vm.runInContext(await read(file), context, { filename: file });
+for (const file of ['data/taxonomy.js', 'data/effects.js', 'data/preview-assets.js', 'scripts/library.js']) vm.runInContext(await read(file), context, { filename: file });
 const effects = JSON.parse(JSON.stringify(context.window.MotionEffects));
 const catalog = JSON.parse(JSON.stringify(context.window.MotionCatalog));
 const lib = context.window.MotionLibrary;
@@ -37,7 +37,7 @@ for (const effect of effects) {
   assert.ok((await stat(path.join(root, effect.demo))).isFile());
   const demo = await read(effect.demo);
   assert.ok(demo.includes('../styles/motion-tokens.css'), 'Shared tokens missing');
-  assert.ok(demo.includes('shared/runtime.js') && demo.includes('api.mount('), 'Demo runtime or independent scene missing');
+  assert.ok(demo.includes('shared/runtime.js') && demo.includes('api.mount(') && demo.includes('request-assets'), 'Demo runtime, local-file bootstrap or independent scene missing');
   const resolved = [...lib.resolveDependencies(effect.id, effects)];
   assert.equal(resolved.at(-1).id, effect.id);
   assert.equal(new Set(resolved.map(item => item.id)).size, resolved.length);
@@ -59,6 +59,9 @@ assert.throws(() => lib.resolveDependencies('a', [{ id: 'a', dependsOn: ['b'] },
 const extra = { ...effects[0], id: 'new-effect', title: '新增效果', positions: ['new-position'], types: ['new-type'], dependsOn: [] };
 const expanded = { positions: [...catalog.positions, { id: 'new-position', label: '新位置' }], types: [...catalog.types, { id: 'new-type', label: '新类型' }] };
 assert.equal(lib.filter([...effects, extra], expanded, { q: '新位置', positions: ['new-position'], types: ['new-type'] })[0].id, 'new-effect');
+assert.equal(context.window.MotionPreviewAssets.css, (await read('styles/motion-tokens.css')) + '\n' + (await read('demos/shared/demo.css')), 'Regenerate local-file assets after changing shared CSS');
+assert.equal(context.window.MotionPreviewAssets.runtime, await read('demos/shared/runtime.js'), 'Regenerate local-file runtime cache');
+assert.equal(context.window.MotionPreviewAssets.components, await read('demos/shared/components.js'), 'Regenerate local-file components cache');
 
 async function checkLinks(file) {
   const html = await read(file);

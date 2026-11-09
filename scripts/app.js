@@ -183,7 +183,11 @@
   });
   window.addEventListener('message', event => {
     const frame = document.querySelector('#demo-frame');
-    if (event.source === frame?.contentWindow && event.data?.channel === 'motion-library' && event.data.action === 'ready') sendPreview('settings');
+    if (event.source !== frame?.contentWindow || event.data?.channel !== 'motion-library') return;
+    if (event.data.action === 'ready') sendPreview('settings');
+    if (location.protocol === 'file:' && event.data.action === 'request-assets') {
+      frame.contentWindow.postMessage({ channel: 'motion-library', action: 'shared-assets', assets: window.MotionPreviewAssets }, '*');
+    }
   });
   window.addEventListener('hashchange', () => { route(); window.scrollTo(0, 0); });
   applyTheme();
